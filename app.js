@@ -1,469 +1,723 @@
 ```javascript
+// =====================================================
+// MINVORA - FIRST PERSON
+// =====================================================
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const TILE = 40;
-
-const COLS = Math.floor(canvas.width / TILE);
-const ROWS = Math.floor(canvas.height / TILE);
-
-let running = false;
-let keys = {};
-let lastTime = 0;
-let mineCooldown = 0;
+const menu = document.getElementById("menu");
+const game = document.getElementById("game");
+const startButton = document.getElementById("startBtn");
 
 
-/* =========================
-   SPELER
-========================= */
+// =====================================================
+// CANVAS
+// =====================================================
+
+function resizeCanvas() {
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+resizeCanvas();
+
+window.addEventListener("resize", resizeCanvas);
+
+
+// =====================================================
+// SPELER
+// =====================================================
 
 const player = {
-    x: 4,
-    y: 4,
-    speed: 4
+
+    x: 0,
+    z: 0,
+
+    rotation: 0,
+
+    speed: 0.08
 };
 
 
-/* =========================
-   INVENTORY
-========================= */
+// =====================================================
+// INVENTORY
+// =====================================================
 
 const inventory = {
-    ore: 0,
-    wood: 0,
-    crystal: 0,
-    stone: 0,
 
-    pickaxe: 0,
-    torch: 0,
-    bomb: 0
+    wood: 0,
+    stone: 0,
+    ore: 0,
+    crystal: 0
 };
 
 
-/* =========================
-   BLOKKEN
-========================= */
+// =====================================================
+// WERELD
+// =====================================================
 
-const blockTypes = [
-
-    {
-        name: "stone",
-        color: "#303844",
-        hp: 2,
-        drops: ["stone"]
-    },
-
-    {
-        name: "ore",
-        color: "#795c35",
-        hp: 3,
-        drops: ["ore"]
-    },
-
-    {
-        name: "wood",
-        color: "#62432d",
-        hp: 2,
-        drops: ["wood"]
-    },
-
-    {
-        name: "crystal",
-        color: "#5d347a",
-        hp: 4,
-        drops: ["crystal"]
-    }
-];
+const objects = [];
 
 
-const blocks = [];
+// Bomen
 
+for (let i = 0; i < 45; i++) {
 
-/* =========================
-   WERELD MAKEN
-========================= */
+    objects.push({
 
-function randomBlock() {
+        type: "tree",
 
-    const r = Math.random();
+        x: Math.random() * 80 - 40,
+        z: Math.random() * 100 + 8,
 
-    if (r < 0.07) {
-        return 3;
-    }
-
-    if (r < 0.18) {
-        return 1;
-    }
-
-    if (r < 0.28) {
-        return 2;
-    }
-
-    return 0;
+        size: 1.5
+    });
 }
 
 
-for (let y = 0; y < ROWS; y++) {
+// Stenen
 
-    blocks[y] = [];
+for (let i = 0; i < 35; i++) {
 
-    for (let x = 0; x < COLS; x++) {
+    objects.push({
 
-        // Spawngebied vrijhouden
-        if (x < 7 && y < 7) {
+        type: "stone",
 
-            blocks[y][x] = -1;
+        x: Math.random() * 80 - 40,
+        z: Math.random() * 100 + 8,
 
-        } else {
-
-            blocks[y][x] = randomBlock();
-        }
-    }
+        size: 1
+    });
 }
 
 
-/* =========================
-   START GAME
-========================= */
+// Erts
 
-document.getElementById("startBtn").addEventListener("click", () => {
+for (let i = 0; i < 18; i++) {
 
-    document.getElementById("menu").classList.add("hidden");
+    objects.push({
 
-    document.getElementById("game").classList.remove("hidden");
+        type: "ore",
+
+        x: Math.random() * 80 - 40,
+        z: Math.random() * 100 + 8,
+
+        size: 0.8
+    });
+}
+
+
+// Kristallen
+
+for (let i = 0; i < 8; i++) {
+
+    objects.push({
+
+        type: "crystal",
+
+        x: Math.random() * 80 - 40,
+        z: Math.random() * 100 + 8,
+
+        size: 1
+    });
+}
+
+
+// =====================================================
+// START GAME
+// =====================================================
+
+startButton.addEventListener("click", function () {
+
+    menu.style.display = "none";
+
+    game.classList.remove("hidden");
+
+    document.body.requestPointerLock();
 
     running = true;
+
+    lastTime = performance.now();
 
     requestAnimationFrame(loop);
 });
 
 
-/* =========================
-   KEYBOARD
-========================= */
+// =====================================================
+// POINTER LOCK
+// =====================================================
 
-document.addEventListener("keydown", (event) => {
+document.addEventListener("click", function () {
+
+    if (running) {
+
+        document.body.requestPointerLock();
+    }
+});
+
+
+// =====================================================
+// MUIS KIJKEN
+// =====================================================
+
+document.addEventListener(
+    "mousemove",
+    function(event) {
+
+        if (!running) {
+            return;
+        }
+
+        if (
+            document.pointerLockElement !== document.body
+        ) {
+            return;
+        }
+
+        player.rotation +=
+            event.movementX * 0.0025;
+    }
+);
+
+
+// =====================================================
+// TOETSEN
+// =====================================================
+
+const keys = {};
+
+document.addEventListener("keydown", function(event) {
 
     keys[event.key.toLowerCase()] = true;
 
-    if (event.key.toLowerCase() === "e") {
-
-        craft("pickaxe");
-    }
 });
 
-
-document.addEventListener("keyup", (event) => {
+document.addEventListener("keyup", function(event) {
 
     keys[event.key.toLowerCase()] = false;
+
 });
 
 
-/* =========================
-   KLIKKEN = MINEN
-========================= */
+// =====================================================
+// BEWEGEN
+// =====================================================
 
-canvas.addEventListener("click", (event) => {
+function updatePlayer() {
 
-    if (!running || mineCooldown > 0) {
+    let forward = 0;
+    let sideways = 0;
+
+
+    if (keys["w"]) {
+        forward += 1;
+    }
+
+    if (keys["s"]) {
+        forward -= 1;
+    }
+
+    if (keys["a"]) {
+        sideways -= 1;
+    }
+
+    if (keys["d"]) {
+        sideways += 1;
+    }
+
+
+    if (
+        forward === 0 &&
+        sideways === 0
+    ) {
         return;
     }
 
-    const rect = canvas.getBoundingClientRect();
 
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const sin =
+        Math.sin(player.rotation);
 
-    const mouseX =
-        (event.clientX - rect.left) * scaleX;
+    const cos =
+        Math.cos(player.rotation);
 
-    const mouseY =
-        (event.clientY - rect.top) * scaleY;
 
-    const tileX = Math.floor(mouseX / TILE);
-    const tileY = Math.floor(mouseY / TILE);
+    player.x +=
+        (
+            sideways * cos -
+            forward * sin
+        ) * player.speed;
+
+
+    player.z +=
+        (
+            sideways * sin +
+            forward * cos
+        ) * player.speed;
+}
+
+
+// =====================================================
+// MINEN
+// =====================================================
+
+canvas.addEventListener("click", function() {
+
+    if (!running) {
+        return;
+    }
+
+    mineObject();
+
+});
+
+
+// =====================================================
+// OBJECT VOOR DE SPELER VINDEN
+// =====================================================
+
+function mineObject() {
+
+    let closest = null;
+
+    let closestDistance = Infinity;
+
+
+    for (const object of objects) {
+
+        const dx =
+            object.x - player.x;
+
+        const dz =
+            object.z - player.z;
+
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dz * dz
+            );
+
+
+        if (distance > 5) {
+            continue;
+        }
+
+
+        let angle =
+            Math.atan2(dx, dz) -
+            player.rotation;
+
+
+        while (angle > Math.PI) {
+            angle -= Math.PI * 2;
+        }
+
+        while (angle < -Math.PI) {
+            angle += Math.PI * 2;
+        }
+
+
+        // Alleen wat ongeveer
+        // recht voor de speler staat
+
+        if (Math.abs(angle) < 0.18) {
+
+            if (
+                distance <
+                closestDistance
+            ) {
+
+                closest =
+                    object;
+
+                closestDistance =
+                    distance;
+            }
+        }
+    }
+
+
+    if (!closest) {
+
+        showMessage(
+            "Er staat niets voor je!"
+        );
+
+        return;
+    }
+
+
+    // Boom
+
+    if (closest.type === "tree") {
+
+        inventory.wood += 3;
+
+        showMessage(
+            "🌲 +3 HOUT"
+        );
+    }
+
+
+    // Steen
+
+    if (closest.type === "stone") {
+
+        inventory.stone += 2;
+
+        showMessage(
+            "🪨 +2 STEEN"
+        );
+    }
+
+
+    // Erts
+
+    if (closest.type === "ore") {
+
+        inventory.ore += 2;
+
+        showMessage(
+            "⛏️ +2 ERTS"
+        );
+    }
+
+
+    // Kristal
+
+    if (closest.type === "crystal") {
+
+        inventory.crystal += 1;
+
+        showMessage(
+            "💎 +1 KRISTAL"
+        );
+    }
+
+
+    // Object verwijderen
+
+    const index =
+        objects.indexOf(closest);
+
+    objects.splice(index, 1);
+
+
+    updateUI();
+
+    animateTool();
+}
+
+
+// =====================================================
+// TOOL ANIMATIE
+// =====================================================
+
+function animateTool() {
+
+    const tool =
+        document.getElementById("tool");
+
+    tool.classList.remove("swing");
+
+    void tool.offsetWidth;
+
+    tool.classList.add("swing");
+}
+
+
+// =====================================================
+// 3D OBJECT TEKENEN
+// =====================================================
+
+function drawObject(object) {
+
+    const dx =
+        object.x - player.x;
+
+    const dz =
+        object.z - player.z;
+
 
     const distance =
-        Math.hypot(
-            tileX - player.x,
-            tileY - player.y
+        Math.sqrt(
+            dx * dx +
+            dz * dz
         );
 
-    if (distance > 3) {
 
-        showMessage("Dat blok is te ver weg!");
-
+    if (distance < 0.5) {
         return;
     }
 
-    mine(tileX, tileY);
 
-    mineCooldown = 8;
-});
+    let angle =
+        Math.atan2(dx, dz) -
+        player.rotation;
 
 
-/* =========================
-   MINEN
-========================= */
+    while (angle > Math.PI) {
+        angle -= Math.PI * 2;
+    }
 
-function mine(x, y) {
+    while (angle < -Math.PI) {
+        angle += Math.PI * 2;
+    }
 
-    if (!blocks[y]) {
+
+    const fov =
+        Math.PI / 3;
+
+
+    if (
+        angle < -fov / 2 ||
+        angle > fov / 2
+    ) {
         return;
     }
 
-    if (blocks[y][x] === undefined) {
-        return;
+
+    const screenX =
+        canvas.width / 2 +
+        (angle / fov) *
+        canvas.width;
+
+
+    const scale =
+        600 / distance;
+
+
+    const size =
+        object.size * scale;
+
+
+    const bottom =
+        canvas.height / 2 +
+        120;
+
+
+    // =========================
+    // BOOM
+    // =========================
+
+    if (object.type === "tree") {
+
+        // Stam
+
+        ctx.fillStyle = "#704525";
+
+        ctx.fillRect(
+            screenX - size * 0.13,
+            bottom - size * 0.55,
+            size * 0.26,
+            size * 0.55
+        );
+
+
+        // Bladeren
+
+        ctx.fillStyle = "#24733a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screenX,
+            bottom - size * 0.75,
+            size * 0.42,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle = "#35934b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screenX - size * 0.2,
+            bottom - size * 0.82,
+            size * 0.25,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screenX + size * 0.2,
+            bottom - size * 0.82,
+            size * 0.25,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
     }
 
-    const typeIndex = blocks[y][x];
 
-    if (typeIndex < 0) {
+    // =========================
+    // STEEN
+    // =========================
 
-        showMessage("Hier kun je niet minen!");
+    if (object.type === "stone") {
 
-        return;
+        ctx.fillStyle = "#777f88";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX - size * 0.4,
+            bottom
+        );
+
+        ctx.lineTo(
+            screenX - size * 0.3,
+            bottom - size * 0.5
+        );
+
+        ctx.lineTo(
+            screenX,
+            bottom - size * 0.7
+        );
+
+        ctx.lineTo(
+            screenX + size * 0.4,
+            bottom - size * 0.45
+        );
+
+        ctx.lineTo(
+            screenX + size * 0.35,
+            bottom
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
     }
 
-    const type = blockTypes[typeIndex];
 
-    type.hp--;
+    // =========================
+    // ERTS
+    // =========================
 
-    if (type.hp > 0) {
+    if (object.type === "ore") {
 
-        showMessage("⛏️ Nog een keer!");
+        ctx.fillStyle = "#55565d";
 
-        return;
+        ctx.fillRect(
+            screenX - size * 0.4,
+            bottom - size * 0.55,
+            size * 0.8,
+            size * 0.55
+        );
+
+
+        ctx.fillStyle = "#e5a52f";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screenX - size * 0.18,
+            bottom - size * 0.3,
+            size * 0.12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.arc(
+            screenX + size * 0.2,
+            bottom - size * 0.45,
+            size * 0.1,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
     }
 
-    const drop =
-        type.drops[
-            Math.floor(
-                Math.random() *
-                type.drops.length
-            )
-        ];
 
-    inventory[drop]++;
+    // =========================
+    // KRISTAL
+    // =========================
 
-    blocks[y][x] = -1;
+    if (object.type === "crystal") {
 
-    if (drop === "ore") {
-        showMessage("⛏️ +1 Erts");
+        ctx.fillStyle = "#d06cff";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX,
+            bottom - size
+        );
+
+        ctx.lineTo(
+            screenX + size * 0.35,
+            bottom - size * 0.35
+        );
+
+        ctx.lineTo(
+            screenX,
+            bottom
+        );
+
+        ctx.lineTo(
+            screenX - size * 0.35,
+            bottom - size * 0.35
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
     }
-
-    else if (drop === "wood") {
-        showMessage("🪵 +1 Hout");
-    }
-
-    else if (drop === "crystal") {
-        showMessage("💎 +1 Kristal");
-    }
-
-    else {
-        showMessage("🧱 +1 Steen");
-    }
-
-    updateUI();
 }
 
 
-/* =========================
-   CRAFTING
-========================= */
+// =====================================================
+// WERELD TEKENEN
+// =====================================================
 
-function craft(item) {
+function drawWorld() {
 
-    if (item === "pickaxe") {
+    // Lucht
 
-        if (
-            inventory.ore >= 10 &&
-            inventory.wood >= 5
-        ) {
-
-            inventory.ore -= 10;
-            inventory.wood -= 5;
-
-            inventory.pickaxe++;
-
-            player.speed = 5;
-
-            showMessage(
-                "⛏️ IJZEREN PICKAXE GEMAAKT!"
-            );
-
-        } else {
-
-            showMessage(
-                "Je hebt 10 erts en 5 hout nodig."
-            );
-        }
-    }
-
-
-    if (item === "torch") {
-
-        if (
-            inventory.wood >= 3 &&
-            inventory.ore >= 1
-        ) {
-
-            inventory.wood -= 3;
-            inventory.ore--;
-
-            inventory.torch += 5;
-
-            showMessage(
-                "🔥 5 fakkels gemaakt!"
-            );
-
-        } else {
-
-            showMessage(
-                "Je hebt 3 hout en 1 erts nodig."
-            );
-        }
-    }
-
-
-    if (item === "crystal") {
-
-        if (
-            inventory.crystal >= 5 &&
-            inventory.ore >= 5
-        ) {
-
-            inventory.crystal -= 5;
-            inventory.ore -= 5;
-
-            inventory.bomb++;
-
-            showMessage(
-                "💎 KRISTALBOM GEMAAKT!"
-            );
-
-        } else {
-
-            showMessage(
-                "Je hebt 5 kristallen en 5 erts nodig."
-            );
-        }
-    }
-
-    updateUI();
-}
-
-
-/* =========================
-   CRAFT KNOPPEN
-========================= */
-
-document.querySelectorAll(".craft").forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        craft(button.dataset.item);
-
-    });
-
-});
-
-
-/* =========================
-   SPELER BEWEGEN
-========================= */
-
-function updatePlayer(dt) {
-
-    let dx = 0;
-    let dy = 0;
-
-    if (
-        keys["w"] ||
-        keys["arrowup"]
-    ) {
-        dy--;
-    }
-
-    if (
-        keys["s"] ||
-        keys["arrowdown"]
-    ) {
-        dy++;
-    }
-
-    if (
-        keys["a"] ||
-        keys["arrowleft"]
-    ) {
-        dx--;
-    }
-
-    if (
-        keys["d"] ||
-        keys["arrowright"]
-    ) {
-        dx++;
-    }
-
-
-    if (dx !== 0 || dy !== 0) {
-
-        const length =
-            Math.hypot(dx, dy);
-
-        dx /= length;
-        dy /= length;
-
-        player.x +=
-            dx *
-            player.speed *
-            dt / 16;
-
-        player.y +=
-            dy *
-            player.speed *
-            dt / 16;
-    }
-
-
-    player.x =
-        Math.max(
-            0.5,
-            Math.min(
-                COLS - 0.5,
-                player.x
-            )
+    const sky =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            canvas.height
         );
 
-    player.y =
-        Math.max(
-            0.5,
-            Math.min(
-                ROWS - 0.5,
-                player.y
-            )
-        );
-}
-
-
-/* =========================
-   TEKENEN
-========================= */
-
-function draw() {
-
-    ctx.clearRect(
+    sky.addColorStop(
         0,
-        0,
-        canvas.width,
-        canvas.height
+        "#67a8d4"
+    );
+
+    sky.addColorStop(
+        0.55,
+        "#b8d9e8"
+    );
+
+    sky.addColorStop(
+        0.56,
+        "#304b2d"
+    );
+
+    sky.addColorStop(
+        1,
+        "#162216"
     );
 
 
-    // Achtergrond
-
-    ctx.fillStyle = "#0b1018";
+    ctx.fillStyle = sky;
 
     ctx.fillRect(
         0,
@@ -473,253 +727,72 @@ function draw() {
     );
 
 
-    // Blokken
+    // Horizon
 
-    for (let y = 0; y < ROWS; y++) {
+    ctx.fillStyle = "#304b2d";
 
-        for (let x = 0; x < COLS; x++) {
-
-            const block =
-                blocks[y][x];
-
-
-            if (block === -1) {
-
-                ctx.fillStyle =
-                    "#101923";
-
-                ctx.fillRect(
-                    x * TILE,
-                    y * TILE,
-                    TILE,
-                    TILE
-                );
-
-            } else {
-
-                const type =
-                    blockTypes[block];
-
-                ctx.fillStyle =
-                    type.color;
-
-                ctx.fillRect(
-                    x * TILE + 1,
-                    y * TILE + 1,
-                    TILE - 2,
-                    TILE - 2
-                );
+    ctx.fillRect(
+        0,
+        canvas.height * 0.55,
+        canvas.width,
+        canvas.height * 0.45
+    );
 
 
-                // Details
+    // Objecten sorteren
+    // zodat verre objecten eerst komen
 
-                ctx.fillStyle =
-                    "rgba(255,255,255,.08)";
+    const sorted =
+        [...objects].sort(
+            (a, b) => {
 
-                ctx.fillRect(
-                    x * TILE + 6,
-                    y * TILE + 6,
-                    8,
-                    8
-                );
-
-
-                // Erts
-
-                if (type.name === "ore") {
-
-                    ctx.fillStyle =
-                        "#e2a94f";
-
-                    ctx.fillRect(
-                        x * TILE + 14,
-                        y * TILE + 18,
-                        6,
-                        6
+                const da =
+                    Math.hypot(
+                        a.x - player.x,
+                        a.z - player.z
                     );
 
-                    ctx.fillRect(
-                        x * TILE + 26,
-                        y * TILE + 10,
-                        5,
-                        5
-                    );
-                }
-
-
-                // Kristal
-
-                if (type.name === "crystal") {
-
-                    ctx.fillStyle =
-                        "#d889ff";
-
-                    ctx.beginPath();
-
-                    ctx.moveTo(
-                        x * TILE + 20,
-                        y * TILE + 7
+                const db =
+                    Math.hypot(
+                        b.x - player.x,
+                        b.z - player.z
                     );
 
-                    ctx.lineTo(
-                        x * TILE + 29,
-                        y * TILE + 20
-                    );
-
-                    ctx.lineTo(
-                        x * TILE + 20,
-                        y * TILE + 33
-                    );
-
-                    ctx.lineTo(
-                        x * TILE + 11,
-                        y * TILE + 20
-                    );
-
-                    ctx.closePath();
-
-                    ctx.fill();
-                }
+                return db - da;
             }
-        }
+        );
+
+
+    for (const object of sorted) {
+
+        drawObject(object);
     }
-
-
-    // Speler
-
-    const px =
-        player.x * TILE;
-
-    const py =
-        player.y * TILE;
-
-
-    ctx.fillStyle =
-        "#57d8ff";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        px,
-        py,
-        13,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    // Ogen
-
-    ctx.fillStyle =
-        "#ffffff";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        px - 4,
-        py - 3,
-        3,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.arc(
-        px + 4,
-        py - 3,
-        3,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    // Mijnbereik
-
-    ctx.strokeStyle =
-        "rgba(87,216,255,.16)";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        px,
-        py,
-        TILE * 3,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.stroke();
 }
 
 
-/* =========================
-   GAME LOOP
-========================= */
-
-function loop(time) {
-
-    if (!running) {
-        return;
-    }
-
-    const dt =
-        Math.min(
-            32,
-            time - lastTime || 16
-        );
-
-    lastTime = time;
-
-    updatePlayer(dt);
-
-    mineCooldown =
-        Math.max(
-            0,
-            mineCooldown - dt / 16
-        );
-
-    draw();
-
-    requestAnimationFrame(loop);
-}
-
-
-/* =========================
-   UI
-========================= */
+// =====================================================
+// HUD
+// =====================================================
 
 function updateUI() {
-
-    document.getElementById("ore").textContent =
-        inventory.ore;
 
     document.getElementById("wood").textContent =
         inventory.wood;
 
-    document.getElementById("crystal").textContent =
-        inventory.crystal;
+    document.getElementById("stone").textContent =
+        inventory.stone;
 
-
-    document.getElementById("invOre").textContent =
+    document.getElementById("ore").textContent =
         inventory.ore;
 
-    document.getElementById("invWood").textContent =
-        inventory.wood;
-
-    document.getElementById("invCrystal").textContent =
+    document.getElementById("crystal").textContent =
         inventory.crystal;
-
-    document.getElementById("invStone").textContent =
-        inventory.stone;
 }
 
 
-/* =========================
-   MELDING
-========================= */
+// =====================================================
+// MELDING
+// =====================================================
 
 let messageTimer;
 
@@ -732,17 +805,57 @@ function showMessage(text) {
 
     message.classList.add("show");
 
+
     clearTimeout(messageTimer);
 
-    messageTimer =
-        setTimeout(() => {
 
-            message.classList.remove("show");
+    messageTimer =
+        setTimeout(function() {
+
+            message.classList.remove(
+                "show"
+            );
 
         }, 1200);
 }
 
 
+// =====================================================
+// TOOL
+// =====================================================
+
+const tool =
+    document.getElementById("tool");
+
+
+// =====================================================
+// GAME LOOP
+// =====================================================
+
+let running = false;
+let lastTime = 0;
+
+
+function loop(time) {
+
+    if (!running) {
+        return;
+    }
+
+
+    updatePlayer();
+
+
+    drawWorld();
+
+
+    requestAnimationFrame(loop);
+}
+
+
+// =====================================================
+// BEGIN
+// =====================================================
+
 updateUI();
 ```
-
