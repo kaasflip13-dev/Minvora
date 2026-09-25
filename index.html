@@ -4,43 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Minvora</title>
+    <title>MINVORA</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- START MENU -->
+    <!-- =========================
+         START MENU
+    ========================== -->
+
     <div id="menu">
 
-        <div class="logo">MINVORA</div>
+        <div class="menuBackground"></div>
 
-        <div class="subtitle">
-            SURVIVAL • MINING • CRAFTING
-        </div>
+        <div class="menuContent">
 
-        <button id="startButton">
-            START GAME
-        </button>
+            <div class="gameLogo">
+                MINVORA
+            </div>
 
-        <div class="menuText">
-            WASD = bewegen<br>
-            Klik = verzamelen<br>
-            E = bouw/crafting menu<br>
-            B = bouwmodus
+            <div class="gameSubtitle">
+                SURVIVAL • MINING • CRAFTING
+            </div>
+
+            <div class="menuLine"></div>
+
+            <button id="startButton" class="menuButton">
+                <span>▶</span>
+                START GAME
+            </button>
+
+            <button id="achievementButton" class="menuButton secondary">
+                <span>🏆</span>
+                ACHIEVEMENTS
+            </button>
+
+            <div class="controls">
+                WASD &nbsp; • &nbsp; BEWEGEN<br>
+                E &nbsp; • &nbsp; CRAFTING<br>
+                B &nbsp; • &nbsp; BOUWEN
+            </div>
+
+            <div class="version">
+                MINVORA v1.0
+            </div>
+
         </div>
 
     </div>
 
 
-    <!-- GAME -->
+    <!-- =========================
+         ACHIEVEMENTS
+    ========================== -->
+
+    <div id="achievementScreen">
+
+        <div class="achievementPanel">
+
+            <button id="closeAchievements" class="closeButton">
+                ✕
+            </button>
+
+            <div class="achievementTitle">
+                🏆 ACHIEVEMENTS
+            </div>
+
+            <div class="achievementSubtitle">
+                Ontdek alles wat je kunt bereiken
+            </div>
+
+            <div id="achievementList"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         GAME
+    ========================== -->
+
     <div id="game">
 
         <canvas id="gameCanvas"></canvas>
 
 
         <!-- HUD -->
+
         <div id="hud">
 
             <div id="healthBox">
@@ -98,6 +151,7 @@
 
 
         <!-- INFO -->
+
         <div id="info">
             WASD = bewegen<br>
             Klik = verzamelen<br>
@@ -107,16 +161,18 @@
 
 
         <!-- MESSAGE -->
+
         <div id="message"></div>
 
 
-        <!-- BOUW / CRAFT MENU -->
+        <!-- CRAFTING -->
+
         <div id="crafting">
 
             <h2>BOUW & CRAFTING</h2>
 
             <p>
-                Maak spullen en plaats ze in de wereld.
+                Maak spullen en machines.
             </p>
 
 
@@ -172,6 +228,7 @@
 
 
         <!-- GAME OVER -->
+
         <div id="gameOver">
 
             <h1>GAME OVER</h1>
