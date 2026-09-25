@@ -1,16 +1,20 @@
-// ========================================
-// MINVORA - APP.JS
-// Top-down survival / mining / crafting game
-// ========================================
+// ==========================================
+// MINVORA - COMPLETE APP.JS
+// ==========================================
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const startMenu = document.getElementById("startMenu");
-const game = document.getElementById("game");
+// MENU
+const menu = document.getElementById("menu");
 const startButton = document.getElementById("startButton");
-const restartButton = document.getElementById("restartButton");
 
+// GAME
+const game = document.getElementById("game");
+const restartButton = document.getElementById("restartButton");
+const gameOverScreen = document.getElementById("gameOver");
+
+// HUD
 const woodText = document.getElementById("wood");
 const stoneText = document.getElementById("stone");
 const oreText = document.getElementById("ore");
@@ -20,39 +24,41 @@ const blockText = document.getElementById("block");
 const healthBar = document.getElementById("health");
 const healthText = document.getElementById("healthText");
 
-const message = document.getElementById("message");
 const info = document.getElementById("info");
+const message = document.getElementById("message");
 
+const crafting = document.getElementById("crafting");
 const craftButtons = document.querySelectorAll(".craftButton");
 
-// ========================================
-// CANVAS
-// ========================================
+// ==========================================
+// CANVAS GROOTTE
+// ==========================================
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
-window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// ========================================
+window.addEventListener("resize", resizeCanvas);
+
+// ==========================================
 // SPELER
-// ========================================
+// ==========================================
 
 const player = {
     x: 1500,
     y: 1500,
     size: 18,
-    speed: 3.2,
+    speed: 3,
     health: 100,
     maxHealth: 100
 };
 
-// ========================================
+// ==========================================
 // INVENTORY
-// ========================================
+// ==========================================
 
 const inventory = {
     wood: 0,
@@ -66,9 +72,9 @@ const inventory = {
     lantern: false
 };
 
-// ========================================
+// ==========================================
 // WERELD
-// ========================================
+// ==========================================
 
 const world = {
     width: 3000,
@@ -79,7 +85,7 @@ let objects = [];
 let enemies = [];
 
 let gameRunning = false;
-let gameOver = false;
+let gameEnded = false;
 
 let keys = {};
 
@@ -88,9 +94,9 @@ let camera = {
     y: 0
 };
 
-// ========================================
+// ==========================================
 // BOUWMODUS
-// ========================================
+// ==========================================
 
 let buildMode = false;
 
@@ -100,19 +106,40 @@ let mouseY = 0;
 let mouseWorldX = 0;
 let mouseWorldY = 0;
 
-// ========================================
-// DAG / NACHT
-// ========================================
+// ==========================================
+// TIJD
+// ==========================================
 
-let dayTime = 0;
+let worldTime = 0;
 
-// ========================================
-// MESSAGE
-// ========================================
+// ==========================================
+// MESSAGE TIMER
+// ==========================================
 
 let messageTimer = 0;
 
+// ==========================================
+// RANDOM
+// ==========================================
+
+function random(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+// ==========================================
+// AFSTAND
+// ==========================================
+
+function distance(x1, y1, x2, y2) {
+    return Math.hypot(x2 - x1, y2 - y1);
+}
+
+// ==========================================
+// MESSAGE
+// ==========================================
+
 function showMessage(text) {
+
     if (!message) return;
 
     message.textContent = text;
@@ -121,145 +148,79 @@ function showMessage(text) {
     messageTimer = 180;
 }
 
-// ========================================
-// RANDOM GETAL
-// ========================================
+// ==========================================
+// UI BIJWERKEN
+// ==========================================
 
-function random(min, max) {
-    return Math.random() * (max - min) + min;
-}
+function updateUI() {
 
-// ========================================
-// AFSTAND
-// ========================================
+    if (woodText) {
+        woodText.textContent = inventory.wood;
+    }
 
-function distance(x1, y1, x2, y2) {
-    return Math.hypot(x2 - x1, y2 - y1);
-}
+    if (stoneText) {
+        stoneText.textContent = inventory.stone;
+    }
 
-// ========================================
-// WERELD MAKEN
-// ========================================
+    if (oreText) {
+        oreText.textContent = inventory.ore;
+    }
 
-function createWorld() {
-    objects = [];
-    enemies = [];
+    if (crystalText) {
+        crystalText.textContent = inventory.crystal;
+    }
 
-    // ----------------------------
-    // BOMEN
-    // ----------------------------
+    if (blockText) {
+        blockText.textContent = inventory.block;
+    }
 
-    for (let i = 0; i < 130; i++) {
-        let x = random(80, world.width - 80);
-        let y = random(80, world.height - 80);
+    if (healthBar) {
 
-        if (distance(x, y, player.x, player.y) < 250) {
-            i--;
-            continue;
+        const percentage =
+            Math.max(
+                0,
+                player.health / player.maxHealth * 100
+            );
+
+        healthBar.style.width =
+            percentage + "%";
+    }
+
+    if (healthText) {
+
+        healthText.textContent =
+            Math.max(
+                0,
+                Math.floor(player.health)
+            ) + " / " + player.maxHealth;
+    }
+
+    if (info) {
+
+        if (buildMode) {
+
+            info.innerHTML =
+                "BOUWMODUS<br>" +
+                "Klik = blok plaatsen<br>" +
+                "B = bouwmodus stoppen";
+
+        } else {
+
+            info.innerHTML =
+                "WASD = bewegen<br>" +
+                "Klik = verzamelen<br>" +
+                "B = bouwen<br>" +
+                "E = crafting";
         }
-
-        objects.push({
-            type: "tree",
-            x: x,
-            y: y,
-            size: 35,
-            hp: 3,
-            maxHp: 3,
-            alive: true
-        });
-    }
-
-    // ----------------------------
-    // STENEN
-    // ----------------------------
-
-    for (let i = 0; i < 100; i++) {
-        let x = random(60, world.width - 60);
-        let y = random(60, world.height - 60);
-
-        if (distance(x, y, player.x, player.y) < 250) {
-            i--;
-            continue;
-        }
-
-        objects.push({
-            type: "stone",
-            x: x,
-            y: y,
-            size: 28,
-            hp: 2,
-            maxHp: 2,
-            alive: true
-        });
-    }
-
-    // ----------------------------
-    // ERTS
-    // ----------------------------
-
-    for (let i = 0; i < 70; i++) {
-        let x = random(60, world.width - 60);
-        let y = random(60, world.height - 60);
-
-        objects.push({
-            type: "ore",
-            x: x,
-            y: y,
-            size: 25,
-            hp: 2,
-            maxHp: 2,
-            alive: true
-        });
-    }
-
-    // ----------------------------
-    // KRISTALLEN
-    // ----------------------------
-
-    for (let i = 0; i < 35; i++) {
-        let x = random(70, world.width - 70);
-        let y = random(70, world.height - 70);
-
-        objects.push({
-            type: "crystal",
-            x: x,
-            y: y,
-            size: 22,
-            hp: 1,
-            maxHp: 1,
-            alive: true
-        });
-    }
-
-    // ----------------------------
-    // VIJANDEN
-    // ----------------------------
-
-    for (let i = 0; i < 18; i++) {
-        let x = random(200, world.width - 200);
-        let y = random(200, world.height - 200);
-
-        if (distance(x, y, player.x, player.y) < 500) {
-            i--;
-            continue;
-        }
-
-        enemies.push({
-            x: x,
-            y: y,
-            size: 22,
-            speed: random(0.4, 0.8),
-            health: 30,
-            attackCooldown: 0
-        });
     }
 }
 
-// ========================================
-// INVENTORY RESETTEN
-// ========================================
+// ==========================================
+// INVENTORY RESET
+// ==========================================
 
 function resetInventory() {
+
     inventory.wood = 0;
     inventory.stone = 0;
     inventory.ore = 0;
@@ -271,99 +232,190 @@ function resetInventory() {
     inventory.lantern = false;
 }
 
-// ========================================
-// UI
-// ========================================
+// ==========================================
+// WERELD MAKEN
+// ==========================================
 
-function updateUI() {
-    if (woodText) woodText.textContent = inventory.wood;
-    if (stoneText) stoneText.textContent = inventory.stone;
-    if (oreText) oreText.textContent = inventory.ore;
-    if (crystalText) crystalText.textContent = inventory.crystal;
-    if (blockText) blockText.textContent = inventory.block;
+function createWorld() {
 
-    if (healthBar) {
-        const healthPercent =
-            Math.max(0, player.health / player.maxHealth * 100);
+    objects = [];
+    enemies = [];
 
-        healthBar.style.width = healthPercent + "%";
-    }
+    // BOMEN
+    for (let i = 0; i < 130; i++) {
 
-    if (healthText) {
-        healthText.textContent =
-            Math.max(0, Math.floor(player.health)) + " / " + player.maxHealth;
-    }
+        const x = random(
+            70,
+            world.width - 70
+        );
 
-    if (info) {
-        if (buildMode) {
-            info.textContent =
-                "BOUWMODUS: klik om een blok te plaatsen • B = stoppen";
-        } else {
-            info.textContent =
-                "WASD = bewegen • Klik = verzamelen • B = bouwen • E = crafting";
+        const y = random(
+            70,
+            world.height - 70
+        );
+
+        if (
+            distance(
+                x,
+                y,
+                player.x,
+                player.y
+            ) < 250
+        ) {
+            i--;
+            continue;
         }
+
+        objects.push({
+            type: "tree",
+            x: x,
+            y: y,
+            size: 35,
+            hp: 3,
+            alive: true
+        });
+    }
+
+    // STENEN
+    for (let i = 0; i < 100; i++) {
+
+        objects.push({
+            type: "stone",
+            x: random(70, world.width - 70),
+            y: random(70, world.height - 70),
+            size: 28,
+            hp: 2,
+            alive: true
+        });
+    }
+
+    // ERTS
+    for (let i = 0; i < 70; i++) {
+
+        objects.push({
+            type: "ore",
+            x: random(70, world.width - 70),
+            y: random(70, world.height - 70),
+            size: 25,
+            hp: 2,
+            alive: true
+        });
+    }
+
+    // KRISTALLEN
+    for (let i = 0; i < 35; i++) {
+
+        objects.push({
+            type: "crystal",
+            x: random(70, world.width - 70),
+            y: random(70, world.height - 70),
+            size: 22,
+            hp: 1,
+            alive: true
+        });
+    }
+
+    // VIJANDEN
+    for (let i = 0; i < 18; i++) {
+
+        let x = random(
+            150,
+            world.width - 150
+        );
+
+        let y = random(
+            150,
+            world.height - 150
+        );
+
+        if (
+            distance(
+                x,
+                y,
+                player.x,
+                player.y
+            ) < 500
+        ) {
+            i--;
+            continue;
+        }
+
+        enemies.push({
+            x: x,
+            y: y,
+            size: 22,
+            speed: 0.5,
+            health: 30,
+            attackCooldown: 0
+        });
     }
 }
 
-// ========================================
-// START GAME
-// ========================================
+// ==========================================
+// GAME STARTEN
+// ==========================================
 
 function startGame() {
+
     gameRunning = true;
-    gameOver = false;
+    gameEnded = false;
 
     player.x = world.width / 2;
     player.y = world.height / 2;
-    player.health = player.maxHealth;
+
+    player.health = 100;
 
     resetInventory();
-    createWorld();
 
     buildMode = false;
 
-    if (startMenu) {
-        startMenu.style.display = "none";
+    createWorld();
+
+    if (menu) {
+        menu.style.display = "none";
     }
 
     if (game) {
         game.style.display = "block";
     }
 
+    if (gameOverScreen) {
+        gameOverScreen.style.display = "none";
+    }
+
     updateUI();
 
-    showMessage("Welkom in Minvora!");
+    showMessage(
+        "Welkom in MINVORA!"
+    );
 
     requestAnimationFrame(gameLoop);
 }
 
-// ========================================
+// ==========================================
 // GAME OVER
-// ========================================
+// ==========================================
 
 function endGame() {
+
     gameRunning = false;
-    gameOver = true;
-
+    gameEnded = true;
     buildMode = false;
-
-    const gameOverScreen =
-        document.getElementById("gameOver");
 
     if (gameOverScreen) {
         gameOverScreen.style.display = "flex";
     }
 
-    showMessage("Je bent verslagen!");
+    showMessage(
+        "GAME OVER"
+    );
 }
 
-// ========================================
-// RESTART
-// ========================================
+// ==========================================
+// OPNIEUW
+// ==========================================
 
 function restartGame() {
-    const gameOverScreen =
-        document.getElementById("gameOver");
 
     if (gameOverScreen) {
         gameOverScreen.style.display = "none";
@@ -372,192 +424,270 @@ function restartGame() {
     startGame();
 }
 
-// ========================================
+// ==========================================
 // TOETSEN
-// ========================================
+// ==========================================
 
-window.addEventListener("keydown", function (event) {
+window.addEventListener(
+    "keydown",
+    function(event) {
 
-    keys[event.key.toLowerCase()] = true;
+        const key =
+            event.key.toLowerCase();
 
-    // B = bouwmodus
-    if (event.key.toLowerCase() === "b" && gameRunning) {
-        buildMode = !buildMode;
+        keys[key] = true;
 
-        if (buildMode) {
-            showMessage("Bouwmodus aan! Klik waar je een blok wilt plaatsen.");
-        } else {
-            showMessage("Bouwmodus uit.");
+        // B = bouwen
+        if (
+            key === "b" &&
+            gameRunning
+        ) {
+
+            buildMode = !buildMode;
+
+            if (buildMode) {
+
+                showMessage(
+                    "Bouwmodus aan!"
+                );
+
+            } else {
+
+                showMessage(
+                    "Bouwmodus uit."
+                );
+            }
+
+            updateUI();
         }
 
-        updateUI();
-    }
+        // E = crafting
+        if (
+            key === "e" &&
+            gameRunning
+        ) {
 
-    // E = crafting
-    if (event.key.toLowerCase() === "e" && gameRunning) {
-        const crafting =
-            document.getElementById("crafting");
-
-        if (crafting) {
+            if (!crafting) return;
 
             if (
                 crafting.style.display === "none" ||
                 crafting.style.display === ""
             ) {
-                crafting.style.display = "block";
+
+                crafting.style.display =
+                    "block";
+
             } else {
-                crafting.style.display = "none";
+
+                crafting.style.display =
+                    "none";
             }
         }
     }
-});
+);
 
-window.addEventListener("keyup", function (event) {
-    keys[event.key.toLowerCase()] = false;
-});
+window.addEventListener(
+    "keyup",
+    function(event) {
 
-// ========================================
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+    }
+);
+
+// ==========================================
 // SPELER BEWEGEN
-// ========================================
+// ==========================================
 
 function movePlayer() {
 
     let dx = 0;
     let dy = 0;
 
-    if (keys["w"]) dy -= 1;
-    if (keys["s"]) dy += 1;
-    if (keys["a"]) dx -= 1;
-    if (keys["d"]) dx += 1;
+    if (keys["w"]) {
+        dy--;
+    }
 
-    // Diagonaal niet sneller maken
+    if (keys["s"]) {
+        dy++;
+    }
+
+    if (keys["a"]) {
+        dx--;
+    }
+
+    if (keys["d"]) {
+        dx++;
+    }
+
     if (dx !== 0 || dy !== 0) {
 
-        const length = Math.hypot(dx, dy);
+        const length =
+            Math.hypot(dx, dy);
 
         dx /= length;
         dy /= length;
 
-        player.x += dx * player.speed;
-        player.y += dy * player.speed;
+        player.x +=
+            dx * player.speed;
+
+        player.y +=
+            dy * player.speed;
     }
 
-    // Binnen de wereld houden
+    // Grenzen
     player.x = Math.max(
         player.size,
-        Math.min(world.width - player.size, player.x)
+        Math.min(
+            world.width - player.size,
+            player.x
+        )
     );
 
     player.y = Math.max(
         player.size,
-        Math.min(world.height - player.size, player.y)
+        Math.min(
+            world.height - player.size,
+            player.y
+        )
     );
 }
 
-// ========================================
+// ==========================================
 // CAMERA
-// ========================================
+// ==========================================
 
 function updateCamera() {
 
     camera.x =
-        player.x - canvas.width / 2;
+        player.x -
+        canvas.width / 2;
 
     camera.y =
-        player.y - canvas.height / 2;
+        player.y -
+        canvas.height / 2;
 
     camera.x = Math.max(
         0,
-        Math.min(world.width - canvas.width, camera.x)
+        Math.min(
+            world.width - canvas.width,
+            camera.x
+        )
     );
 
     camera.y = Math.max(
         0,
-        Math.min(world.height - canvas.height, camera.y)
+        Math.min(
+            world.height - canvas.height,
+            camera.y
+        )
     );
 }
 
-// ========================================
-// MUIS
-// ========================================
+// ==========================================
+// MUIS BEWEGING
+// ==========================================
 
-canvas.addEventListener("mousemove", function (event) {
+canvas.addEventListener(
+    "mousemove",
+    function(event) {
 
-    const rect = canvas.getBoundingClientRect();
+        const rect =
+            canvas.getBoundingClientRect();
 
-    mouseX = event.clientX - rect.left;
-    mouseY = event.clientY - rect.top;
+        mouseX =
+            event.clientX - rect.left;
 
-    mouseWorldX = mouseX + camera.x;
-    mouseWorldY = mouseY + camera.y;
-});
+        mouseY =
+            event.clientY - rect.top;
 
-// ========================================
-// KLIKKEN
-// ========================================
+        mouseWorldX =
+            mouseX + camera.x;
 
-canvas.addEventListener("click", function () {
-
-    if (!gameRunning || gameOver) return;
-
-    // ------------------------------------
-    // BOUWMODUS
-    // ------------------------------------
-
-    if (buildMode) {
-        placeBlock(mouseWorldX, mouseWorldY);
-        return;
+        mouseWorldY =
+            mouseY + camera.y;
     }
+);
 
-    // ------------------------------------
-    // NORMALE VERZAMELMODUS
-    // ------------------------------------
+// ==========================================
+// MUIS KLIK
+// ==========================================
 
-    collectObject(mouseWorldX, mouseWorldY);
-});
+canvas.addEventListener(
+    "click",
+    function() {
 
-// ========================================
+        if (!gameRunning) return;
+
+        if (buildMode) {
+
+            placeBlock(
+                mouseWorldX,
+                mouseWorldY
+            );
+
+        } else {
+
+            collectObject(
+                mouseWorldX,
+                mouseWorldY
+            );
+        }
+    }
+);
+
+// ==========================================
 // BLOK PLAATSEN
-// ========================================
+// ==========================================
 
 function placeBlock(x, y) {
 
     if (inventory.block <= 0) {
-        showMessage("Je hebt geen bouwblokken!");
+
+        showMessage(
+            "Je hebt geen bouwblokken!"
+        );
+
         return;
     }
 
-    const buildDistance =
-        distance(player.x, player.y, x, y);
+    const d =
+        distance(
+            player.x,
+            player.y,
+            x,
+            y
+        );
 
-    if (buildDistance > 220) {
-        showMessage("Dat is te ver weg!");
+    if (d > 220) {
+
+        showMessage(
+            "Dat is te ver weg!"
+        );
+
+        return;
+    }
+
+    if (d < 45) {
+
+        showMessage(
+            "Je staat te dichtbij!"
+        );
+
         return;
     }
 
     // Raster
     const grid = 40;
 
-    const snappedX =
+    const blockX =
         Math.round(x / grid) * grid;
 
-    const snappedY =
+    const blockY =
         Math.round(y / grid) * grid;
 
-    // Niet bovenop de speler bouwen
-    if (
-        distance(
-            player.x,
-            player.y,
-            snappedX,
-            snappedY
-        ) < 45
-    ) {
-        showMessage("Je kunt hier niet bouwen.");
-        return;
-    }
-
-    // Controleren of er al iets staat
+    // Controleren op andere objecten
     for (const object of objects) {
 
         if (!object.alive) continue;
@@ -566,23 +696,26 @@ function placeBlock(x, y) {
             distance(
                 object.x,
                 object.y,
-                snappedX,
-                snappedY
+                blockX,
+                blockY
             ) < 35
         ) {
-            showMessage("Hier staat al iets.");
+
+            showMessage(
+                "Hier staat al iets!"
+            );
+
             return;
         }
     }
 
-    // Blok toevoegen
+    // Blok maken
     objects.push({
         type: "block",
-        x: snappedX,
-        y: snappedY,
+        x: blockX,
+        y: blockY,
         size: 40,
-        hp: 9999,
-        maxHp: 9999,
+        hp: 999,
         alive: true
     });
 
@@ -590,83 +723,122 @@ function placeBlock(x, y) {
 
     updateUI();
 
-    showMessage("Bouwblok geplaatst!");
+    showMessage(
+        "Bouwblok geplaatst!"
+    );
 }
 
-// ========================================
-// OBJECT VERZAMELEN
-// ========================================
+// ==========================================
+// VERZAMELEN
+// ==========================================
 
 function collectObject(x, y) {
 
-    let closest = null;
-    let closestDistance = Infinity;
+    let selected = null;
+    let selectedDistance = Infinity;
 
     for (const object of objects) {
 
         if (!object.alive) continue;
 
-        if (object.type === "block") continue;
+        if (object.type === "block") {
+            continue;
+        }
 
-        const d =
-            distance(player.x, player.y, object.x, object.y);
+        const playerDistance =
+            distance(
+                player.x,
+                player.y,
+                object.x,
+                object.y
+            );
 
-        if (d > 130) continue;
+        if (playerDistance > 130) {
+            continue;
+        }
 
         const clickDistance =
-            distance(x, y, object.x, object.y);
+            distance(
+                x,
+                y,
+                object.x,
+                object.y
+            );
 
-        if (clickDistance < closestDistance) {
+        if (
+            clickDistance <
+            selectedDistance
+        ) {
 
-            closest = object;
-            closestDistance = clickDistance;
+            selected = object;
+            selectedDistance =
+                clickDistance;
         }
     }
 
-    // Vijanden controleren
+    // Vijand aanvallen
     for (const enemy of enemies) {
 
-        const d =
-            distance(player.x, player.y, enemy.x, enemy.y);
+        const playerDistance =
+            distance(
+                player.x,
+                player.y,
+                enemy.x,
+                enemy.y
+            );
 
-        if (d <= 130) {
+        if (playerDistance > 130) {
+            continue;
+        }
 
-            const clickDistance =
-                distance(x, y, enemy.x, enemy.y);
+        const clickDistance =
+            distance(
+                x,
+                y,
+                enemy.x,
+                enemy.y
+            );
 
-            if (clickDistance < closestDistance) {
+        if (
+            clickDistance <
+            selectedDistance
+        ) {
 
-                enemy.health -= 10;
+            enemy.health -= 10;
 
-                showMessage("Je valt de vijand aan!");
+            showMessage(
+                "Vijand geraakt!"
+            );
 
-                if (enemy.health <= 0) {
+            if (enemy.health <= 0) {
 
-                    enemies.splice(
-                        enemies.indexOf(enemy),
-                        1
-                    );
+                enemies.splice(
+                    enemies.indexOf(enemy),
+                    1
+                );
 
-                    showMessage("Vijand verslagen!");
-                }
-
-                return;
+                showMessage(
+                    "Vijand verslagen!"
+                );
             }
+
+            return;
         }
     }
 
-    if (!closest) {
-        showMessage("Niets dichtbij.");
+    if (!selected) {
+
+        showMessage(
+            "Er is hier niets om te verzamelen."
+        );
+
         return;
     }
 
-    closest.hp--;
+    // Boom
+    if (selected.type === "tree") {
 
-    // ------------------------------------
-    // BOOM
-    // ------------------------------------
-
-    if (closest.type === "tree") {
+        selected.hp--;
 
         const amount =
             inventory.axe ? 5 : 3;
@@ -678,11 +850,10 @@ function collectObject(x, y) {
         );
     }
 
-    // ------------------------------------
-    // STEEN
-    // ------------------------------------
+    // Steen
+    if (selected.type === "stone") {
 
-    if (closest.type === "stone") {
+        selected.hp--;
 
         const amount =
             inventory.pickaxe ? 4 : 2;
@@ -694,11 +865,10 @@ function collectObject(x, y) {
         );
     }
 
-    // ------------------------------------
-    // ERTS
-    // ------------------------------------
+    // Erts
+    if (selected.type === "ore") {
 
-    if (closest.type === "ore") {
+        selected.hp--;
 
         const amount =
             inventory.pickaxe ? 4 : 2;
@@ -710,91 +880,104 @@ function collectObject(x, y) {
         );
     }
 
-    // ------------------------------------
-    // KRISTAL
-    // ------------------------------------
+    // Kristal
+    if (selected.type === "crystal") {
 
-    if (closest.type === "crystal") {
+        selected.hp--;
 
         inventory.crystal++;
 
-        showMessage("+1 kristal");
+        showMessage(
+            "+1 kristal"
+        );
     }
 
-    if (closest.hp <= 0) {
-        closest.alive = false;
+    if (selected.hp <= 0) {
+
+        selected.alive = false;
     }
 
     updateUI();
 }
 
-// ========================================
-// RECHTSKLIK = BLOK VERWIJDEREN
-// ========================================
+// ==========================================
+// RECHTSKLIK = BLOK TERUGPAKKEN
+// ==========================================
 
-canvas.addEventListener("contextmenu", function (event) {
+canvas.addEventListener(
+    "contextmenu",
+    function(event) {
 
-    event.preventDefault();
+        event.preventDefault();
 
-    if (!gameRunning) return;
+        if (!gameRunning) return;
+        if (!buildMode) return;
 
-    if (!buildMode) return;
+        const rect =
+            canvas.getBoundingClientRect();
 
-    const rect = canvas.getBoundingClientRect();
+        const x =
+            event.clientX -
+            rect.left +
+            camera.x;
 
-    const x =
-        event.clientX - rect.left + camera.x;
+        const y =
+            event.clientY -
+            rect.top +
+            camera.y;
 
-    const y =
-        event.clientY - rect.top + camera.y;
+        for (const object of objects) {
 
-    let found = null;
+            if (!object.alive) continue;
 
-    for (const object of objects) {
+            if (object.type !== "block") {
+                continue;
+            }
 
-        if (!object.alive) continue;
+            if (
+                distance(
+                    x,
+                    y,
+                    object.x,
+                    object.y
+                ) < 30
+            ) {
 
-        if (object.type !== "block") continue;
+                if (
+                    distance(
+                        player.x,
+                        player.y,
+                        object.x,
+                        object.y
+                    ) > 220
+                ) {
 
-        if (
-            distance(
-                x,
-                y,
-                object.x,
-                object.y
-            ) < 30
-        ) {
-            found = object;
-            break;
+                    showMessage(
+                        "Te ver weg!"
+                    );
+
+                    return;
+                }
+
+                object.alive = false;
+
+                inventory.block++;
+
+                updateUI();
+
+                showMessage(
+                    "Bouwblok teruggepakt!"
+                );
+
+                return;
+            }
         }
     }
+);
 
-    if (!found) return;
-
-    if (
-        distance(
-            player.x,
-            player.y,
-            found.x,
-            found.y
-        ) > 220
-    ) {
-        showMessage("Dit blok is te ver weg.");
-        return;
-    }
-
-    found.alive = false;
-
-    inventory.block++;
-
-    updateUI();
-
-    showMessage("Bouwblok teruggepakt!");
-});
-
-// ========================================
-// VIJANDEN
-// ========================================
+// ==========================================
+// VIJANDEN UPDATE
+// ==========================================
 
 function updateEnemies() {
 
@@ -808,8 +991,10 @@ function updateEnemies() {
                 player.y
             );
 
-        // Vijand volgt speler
-        if (d < 450 && d > 35) {
+        if (
+            d < 500 &&
+            d > 35
+        ) {
 
             const dx =
                 (player.x - enemy.x) / d;
@@ -817,52 +1002,73 @@ function updateEnemies() {
             const dy =
                 (player.y - enemy.y) / d;
 
-            enemy.x += dx * enemy.speed;
-            enemy.y += dy * enemy.speed;
+            enemy.x +=
+                dx * enemy.speed;
+
+            enemy.y +=
+                dy * enemy.speed;
         }
 
-        // Aanvallen
         if (d < 35) {
 
-            if (enemy.attackCooldown <= 0) {
+            if (
+                enemy.attackCooldown <= 0
+            ) {
 
                 player.health -= 5;
 
-                enemy.attackCooldown = 50;
+                enemy.attackCooldown = 60;
 
                 updateUI();
 
-                showMessage("-5 gezondheid");
+                showMessage(
+                    "-5 gezondheid"
+                );
 
-                if (player.health <= 0) {
+                if (
+                    player.health <= 0
+                ) {
+
                     player.health = 0;
+
                     updateUI();
+
                     endGame();
+
+                    return;
                 }
             }
         }
 
-        if (enemy.attackCooldown > 0) {
+        if (
+            enemy.attackCooldown > 0
+        ) {
+
             enemy.attackCooldown--;
         }
     }
 }
 
-// ========================================
-// DAG / NACHT
-// ========================================
+// ==========================================
+// TIJD
+// ==========================================
 
-function updateDayNight() {
-    dayTime += 0.0015;
+function updateTime() {
 
-    if (dayTime > Math.PI * 2) {
-        dayTime = 0;
+    worldTime += 0.0015;
+
+    if (
+        worldTime >
+        Math.PI * 2
+    ) {
+
+        worldTime = 0;
     }
 }
 
-// ========================================
+// ==========================================
 // GROND TEKENEN
-// ========================================
+// ==========================================
 
 function drawGround() {
 
@@ -883,7 +1089,9 @@ function drawGround() {
     const startY =
         -camera.y % gridSize;
 
-    ctx.strokeStyle = "rgba(255,255,255,0.025)";
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.025)";
+
     ctx.lineWidth = 1;
 
     for (
@@ -915,9 +1123,9 @@ function drawGround() {
     }
 }
 
-// ========================================
-// OBJECTEN TEKENEN
-// ========================================
+// ==========================================
+// OBJECT TEKENEN
+// ==========================================
 
 function drawObject(object) {
 
@@ -929,24 +1137,15 @@ function drawObject(object) {
     const y =
         object.y - camera.y;
 
-    // Buiten beeld
-    if (
-        x < -100 ||
-        x > canvas.width + 100 ||
-        y < -100 ||
-        y > canvas.height + 100
-    ) {
-        return;
-    }
-
-    // ====================================
+    // ======================================
     // BOOM
-    // ====================================
+    // ======================================
 
     if (object.type === "tree") {
 
         // Schaduw
-        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillStyle =
+            "rgba(0,0,0,0.25)";
 
         ctx.beginPath();
 
@@ -1016,9 +1215,9 @@ function drawObject(object) {
         ctx.fill();
     }
 
-    // ====================================
+    // ======================================
     // STEEN
-    // ====================================
+    // ======================================
 
     if (object.type === "stone") {
 
@@ -1038,12 +1237,13 @@ function drawObject(object) {
         ctx.fill();
 
         ctx.strokeStyle = "#aaa";
+
         ctx.stroke();
     }
 
-    // ====================================
+    // ======================================
     // ERTS
-    // ====================================
+    // ======================================
 
     if (object.type === "ore") {
 
@@ -1063,14 +1263,31 @@ function drawObject(object) {
 
         ctx.fillStyle = "#d58b35";
 
-        ctx.fillRect(x - 9, y - 5, 6, 6);
-        ctx.fillRect(x + 2, y + 4, 7, 5);
-        ctx.fillRect(x + 5, y - 9, 5, 5);
+        ctx.fillRect(
+            x - 9,
+            y - 5,
+            6,
+            6
+        );
+
+        ctx.fillRect(
+            x + 2,
+            y + 4,
+            7,
+            5
+        );
+
+        ctx.fillRect(
+            x + 5,
+            y - 9,
+            5,
+            5
+        );
     }
 
-    // ====================================
+    // ======================================
     // KRISTAL
-    // ====================================
+    // ======================================
 
     if (object.type === "crystal") {
 
@@ -1089,23 +1306,25 @@ function drawObject(object) {
         ctx.fill();
 
         ctx.strokeStyle = "#d8fbff";
+
         ctx.stroke();
     }
 
-    // ====================================
+    // ======================================
     // BOUWBLOK
-    // ====================================
+    // ======================================
 
     if (object.type === "block") {
 
-        const size = object.size;
+        const size = 40;
 
         // Schaduw
-        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillStyle =
+            "rgba(0,0,0,0.3)";
 
         ctx.fillRect(
-            x - size / 2 + 5,
-            y - size / 2 + 5,
+            x - 15,
+            y - 15,
             size,
             size
         );
@@ -1114,8 +1333,8 @@ function drawObject(object) {
         ctx.fillStyle = "#8a6544";
 
         ctx.fillRect(
-            x - size / 2,
-            y - size / 2,
+            x - 20,
+            y - 20,
             size,
             size
         );
@@ -1124,42 +1343,43 @@ function drawObject(object) {
         ctx.fillStyle = "#b58a5c";
 
         ctx.fillRect(
-            x - size / 2,
-            y - size / 2,
+            x - 20,
+            y - 20,
             size,
             8
         );
 
-        // Baksteenlijnen
-        ctx.strokeStyle = "#65452e";
+        // Rand
+        ctx.strokeStyle = "#5d402b";
         ctx.lineWidth = 2;
 
         ctx.strokeRect(
-            x - size / 2,
-            y - size / 2,
+            x - 20,
+            y - 20,
             size,
             size
         );
 
+        // Middenlijn
         ctx.beginPath();
 
-        ctx.moveTo(x - size / 2, y);
-        ctx.lineTo(x + size / 2, y);
+        ctx.moveTo(
+            x - 20,
+            y
+        );
 
-        ctx.stroke();
-
-        ctx.beginPath();
-
-        ctx.moveTo(x, y - size / 2);
-        ctx.lineTo(x, y);
+        ctx.lineTo(
+            x + 20,
+            y
+        );
 
         ctx.stroke();
     }
 }
 
-// ========================================
+// ==========================================
 // VIJAND TEKENEN
-// ========================================
+// ==========================================
 
 function drawEnemy(enemy) {
 
@@ -1169,17 +1389,9 @@ function drawEnemy(enemy) {
     const y =
         enemy.y - camera.y;
 
-    if (
-        x < -50 ||
-        x > canvas.width + 50 ||
-        y < -50 ||
-        y > canvas.height + 50
-    ) {
-        return;
-    }
-
     // Schaduw
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillStyle =
+        "rgba(0,0,0,0.3)";
 
     ctx.beginPath();
 
@@ -1195,7 +1407,7 @@ function drawEnemy(enemy) {
 
     ctx.fill();
 
-    // Vijand
+    // Lichaam
     ctx.fillStyle = "#8c3f8f";
 
     ctx.beginPath();
@@ -1211,18 +1423,49 @@ function drawEnemy(enemy) {
     ctx.fill();
 
     // Ogen
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "white";
 
     ctx.beginPath();
-    ctx.arc(x - 7, y - 4, 4, 0, Math.PI * 2);
-    ctx.arc(x + 7, y - 4, 4, 0, Math.PI * 2);
+
+    ctx.arc(
+        x - 7,
+        y - 4,
+        4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.arc(
+        x + 7,
+        y - 4,
+        4,
+        0,
+        Math.PI * 2
+    );
+
     ctx.fill();
 
+    // Pupillen
     ctx.fillStyle = "#111";
 
     ctx.beginPath();
-    ctx.arc(x - 7, y - 4, 2, 0, Math.PI * 2);
-    ctx.arc(x + 7, y - 4, 2, 0, Math.PI * 2);
+
+    ctx.arc(
+        x - 7,
+        y - 4,
+        2,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.arc(
+        x + 7,
+        y - 4,
+        2,
+        0,
+        Math.PI * 2
+    );
+
     ctx.fill();
 
     // Healthbar
@@ -1240,14 +1483,18 @@ function drawEnemy(enemy) {
     ctx.fillRect(
         x - 18,
         y - 31,
-        36 * (enemy.health / 30),
+        36 *
+        Math.max(
+            0,
+            enemy.health / 30
+        ),
         5
     );
 }
 
-// ========================================
+// ==========================================
 // SPELER TEKENEN
-// ========================================
+// ==========================================
 
 function drawPlayer() {
 
@@ -1258,7 +1505,8 @@ function drawPlayer() {
         player.y - camera.y;
 
     // Schaduw
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillStyle =
+        "rgba(0,0,0,0.35)";
 
     ctx.beginPath();
 
@@ -1310,20 +1558,20 @@ function drawPlayer() {
 
     ctx.fill();
 
-    // Richting
+    // Pet / haar
     ctx.fillStyle = "#222";
 
     ctx.fillRect(
-        x - 3,
-        y - 19,
-        6,
-        7
+        x - 6,
+        y - 14,
+        12,
+        5
     );
 }
 
-// ========================================
+// ==========================================
 // BOUWPREVIEW
-// ========================================
+// ==========================================
 
 function drawBuildPreview() {
 
@@ -1333,34 +1581,42 @@ function drawBuildPreview() {
 
     const grid = 40;
 
-    const snappedX =
-        Math.round(mouseWorldX / grid) * grid;
+    const x =
+        Math.round(
+            mouseWorldX / grid
+        ) * grid;
 
-    const snappedY =
-        Math.round(mouseWorldY / grid) * grid;
+    const y =
+        Math.round(
+            mouseWorldY / grid
+        ) * grid;
 
     const screenX =
-        snappedX - camera.x;
+        x - camera.x;
 
     const screenY =
-        snappedY - camera.y;
-
-    const d =
-        distance(
-            player.x,
-            player.y,
-            snappedX,
-            snappedY
-        );
+        y - camera.y;
 
     let canBuild = true;
 
-    if (d > 220) {
+    if (
+        distance(
+            player.x,
+            player.y,
+            x,
+            y
+        ) > 220
+    ) {
         canBuild = false;
     }
 
     if (
-        d < 45
+        distance(
+            player.x,
+            player.y,
+            x,
+            y
+        ) < 45
     ) {
         canBuild = false;
     }
@@ -1373,10 +1629,11 @@ function drawBuildPreview() {
             distance(
                 object.x,
                 object.y,
-                snappedX,
-                snappedY
+                x,
+                y
             ) < 35
         ) {
+
             canBuild = false;
             break;
         }
@@ -1385,7 +1642,9 @@ function drawBuildPreview() {
     ctx.globalAlpha = 0.45;
 
     ctx.fillStyle =
-        canBuild ? "#c8945c" : "#d34b4b";
+        canBuild
+            ? "#c8945c"
+            : "#d34b4b";
 
     ctx.fillRect(
         screenX - 20,
@@ -1397,7 +1656,9 @@ function drawBuildPreview() {
     ctx.globalAlpha = 1;
 
     ctx.strokeStyle =
-        canBuild ? "#fff" : "#ffaaaa";
+        canBuild
+            ? "white"
+            : "#ffaaaa";
 
     ctx.lineWidth = 2;
 
@@ -1409,20 +1670,22 @@ function drawBuildPreview() {
     );
 }
 
-// ========================================
-// DAG/NACHT EFFECT
-// ========================================
+// ==========================================
+// DAG / NACHT
+// ==========================================
 
 function drawDayNight() {
 
     const darkness =
-        (Math.sin(dayTime) + 1) / 2;
+        (Math.sin(worldTime) + 1) / 2;
 
     const alpha =
-        darkness * 0.45;
+        darkness * 0.4;
 
     ctx.fillStyle =
-        "rgba(10,15,40," + alpha + ")";
+        "rgba(5,10,35," +
+        alpha +
+        ")";
 
     ctx.fillRect(
         0,
@@ -1432,9 +1695,9 @@ function drawDayNight() {
     );
 }
 
-// ========================================
-// GAME TEKENEN
-// ========================================
+// ==========================================
+// TEKENEN
+// ==========================================
 
 function draw() {
 
@@ -1467,13 +1730,15 @@ function draw() {
     drawDayNight();
 }
 
-// ========================================
+// ==========================================
 // GAME LOOP
-// ========================================
+// ==========================================
 
 function gameLoop() {
 
-    if (!gameRunning || gameOver) return;
+    if (!gameRunning) return;
+
+    if (gameEnded) return;
 
     movePlayer();
 
@@ -1481,7 +1746,7 @@ function gameLoop() {
 
     updateCamera();
 
-    updateDayNight();
+    updateTime();
 
     if (messageTimer > 0) {
 
@@ -1491,165 +1756,227 @@ function gameLoop() {
             messageTimer <= 0 &&
             message
         ) {
-            message.style.opacity = "0";
+
+            message.style.opacity =
+                "0";
         }
     }
 
     draw();
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(
+        gameLoop
+    );
 }
 
-// ========================================
+// ==========================================
 // CRAFTING
-// ========================================
+// ==========================================
 
-craftButtons.forEach(function (button) {
+craftButtons.forEach(
+    function(button) {
 
-    button.addEventListener("click", function () {
+        button.addEventListener(
+            "click",
+            function() {
 
-        const item =
-            button.dataset.item;
+                // JUISTE HTML:
+                // data-craft="..."
 
-        // AXE
-        if (item === "axe") {
+                const item =
+                    button.dataset.craft;
 
-            if (inventory.axe) {
-                showMessage("Je hebt al een bijl.");
-                return;
+                // --------------------------
+                // BIJL
+                // --------------------------
+
+                if (item === "axe") {
+
+                    if (inventory.axe) {
+
+                        showMessage(
+                            "Je hebt al een bijl."
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        inventory.wood >= 8 &&
+                        inventory.stone >= 4
+                    ) {
+
+                        inventory.wood -= 8;
+                        inventory.stone -= 4;
+
+                        inventory.axe = true;
+
+                        showMessage(
+                            "🪓 Bijl gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "Je hebt 8 hout + 4 steen nodig."
+                        );
+                    }
+                }
+
+                // --------------------------
+                // PIKHOUWEEL
+                // --------------------------
+
+                if (item === "pickaxe") {
+
+                    if (inventory.pickaxe) {
+
+                        showMessage(
+                            "Je hebt al een pikhouweel."
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        inventory.stone >= 10 &&
+                        inventory.ore >= 5
+                    ) {
+
+                        inventory.stone -= 10;
+                        inventory.ore -= 5;
+
+                        inventory.pickaxe = true;
+
+                        showMessage(
+                            "⛏️ Pikhouweel gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "Je hebt 10 steen + 5 erts nodig."
+                        );
+                    }
+                }
+
+                // --------------------------
+                // LANTAARN
+                // --------------------------
+
+                if (item === "lantern") {
+
+                    if (inventory.lantern) {
+
+                        showMessage(
+                            "Je hebt al een lantaarn."
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        inventory.wood >= 5 &&
+                        inventory.ore >= 2
+                    ) {
+
+                        inventory.wood -= 5;
+                        inventory.ore -= 2;
+
+                        inventory.lantern = true;
+
+                        showMessage(
+                            "🏮 Lantaarn gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "Je hebt 5 hout + 2 erts nodig."
+                        );
+                    }
+                }
+
+                // --------------------------
+                // BOUWBLOK
+                // --------------------------
+
+                if (item === "block") {
+
+                    if (
+                        inventory.wood >= 5 &&
+                        inventory.stone >= 5
+                    ) {
+
+                        inventory.wood -= 5;
+                        inventory.stone -= 5;
+
+                        inventory.block++;
+
+                        showMessage(
+                            "🧱 Bouwblok gemaakt! Druk B."
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "Je hebt 5 hout + 5 steen nodig."
+                        );
+                    }
+                }
+
+                updateUI();
             }
+        );
+    }
+);
 
-            if (
-                inventory.wood >= 8 &&
-                inventory.stone >= 4
-            ) {
-
-                inventory.wood -= 8;
-                inventory.stone -= 4;
-
-                inventory.axe = true;
-
-                showMessage("Bijl gemaakt!");
-            } else {
-                showMessage(
-                    "Je hebt 8 hout en 4 steen nodig."
-                );
-            }
-        }
-
-        // PICKAXE
-        if (item === "pickaxe") {
-
-            if (inventory.pickaxe) {
-                showMessage("Je hebt al een pikhouweel.");
-                return;
-            }
-
-            if (
-                inventory.stone >= 10 &&
-                inventory.ore >= 5
-            ) {
-
-                inventory.stone -= 10;
-                inventory.ore -= 5;
-
-                inventory.pickaxe = true;
-
-                showMessage("Pikhouweel gemaakt!");
-            } else {
-                showMessage(
-                    "Je hebt 10 steen en 5 erts nodig."
-                );
-            }
-        }
-
-        // LANTAARN
-        if (item === "lantern") {
-
-            if (inventory.lantern) {
-                showMessage("Je hebt al een lantaarn.");
-                return;
-            }
-
-            if (
-                inventory.wood >= 5 &&
-                inventory.ore >= 2
-            ) {
-
-                inventory.wood -= 5;
-                inventory.ore -= 2;
-
-                inventory.lantern = true;
-
-                showMessage("Lantaarn gemaakt!");
-            } else {
-                showMessage(
-                    "Je hebt 5 hout en 2 erts nodig."
-                );
-            }
-        }
-
-        // BOUWBLOK
-        if (item === "block") {
-
-            if (
-                inventory.wood >= 5 &&
-                inventory.stone >= 5
-            ) {
-
-                inventory.wood -= 5;
-                inventory.stone -= 5;
-
-                inventory.block++;
-
-                showMessage(
-                    "Bouwblok gemaakt! Druk op B om te bouwen."
-                );
-            } else {
-                showMessage(
-                    "Je hebt 5 hout en 5 steen nodig."
-                );
-            }
-        }
-
-        updateUI();
-    });
-});
-
-// ========================================
-// START BUTTON
-// ========================================
+// ==========================================
+// START KNOP
+// ==========================================
 
 if (startButton) {
+
     startButton.addEventListener(
         "click",
         startGame
     );
 }
 
-// ========================================
-// RESTART BUTTON
-// ========================================
+// ==========================================
+// OPNIEUW KNOP
+// ==========================================
 
 if (restartButton) {
+
     restartButton.addEventListener(
         "click",
         restartGame
     );
 }
 
-// ========================================
-// STARTSTATUS
-// ========================================
+// ==========================================
+// BEGINSTATUS
+// ==========================================
 
 if (game) {
     game.style.display = "none";
 }
 
-if (startMenu) {
-    startMenu.style.display = "flex";
+if (menu) {
+    menu.style.display = "flex";
+}
+
+if (gameOverScreen) {
+    gameOverScreen.style.display = "none";
+}
+
+if (crafting) {
+    crafting.style.display = "none";
 }
 
 updateUI();
 
-console.log("Minvora geladen!");
+console.log(
+    "MINVORA app.js is geladen!"
+);
