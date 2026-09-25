@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -12,101 +11,77 @@
 
 <body>
 
-    <!-- =========================
-         START MENU
-    ========================== -->
-
+    <!-- START MENU -->
     <div id="menu">
 
-        <h1>MINVORA</h1>
+        <div class="logo">MINVORA</div>
 
-        <p>
-            Mine • Verzamel • Craft • Explore
-        </p>
+        <div class="subtitle">
+            SURVIVAL • MINING • CRAFTING
+        </div>
 
-        <button
-            id="startBtn"
-            type="button"
-            onclick="startGame()"
-        >
+        <button id="startButton">
             START GAME
         </button>
 
-        <p class="controls">
-            WASD = lopen<br>
-            Muis = kijken<br>
-            Klik = hakken / minen
-        </p>
+        <div class="menuText">
+            WASD om te bewegen<br>
+            Klik op grondstoffen om ze te verzamelen<br>
+            E opent crafting
+        </div>
 
     </div>
 
 
-    <!-- =========================
-         GAME
-    ========================== -->
+    <!-- GAME -->
+    <div id="game">
 
-    <div
-        id="game"
-        class="hidden"
-    >
-
-        <canvas
-            id="gameCanvas"
-        ></canvas>
-
-
-        <!-- Crosshair -->
-
-        <div id="crosshair">
-            +
-        </div>
+        <canvas id="gameCanvas"></canvas>
 
 
         <!-- HUD -->
-
         <div id="hud">
 
-            <div class="topLeft">
+            <div id="healthBox">
+                <div class="hudTitle">
+                    GEZONDHEID
+                </div>
 
-                <h2>
-                    MINVORA
-                </h2>
+                <div class="healthBar">
+                    <div id="health"></div>
+                </div>
 
-                <span id="status">
-                    Zoek grondstoffen...
-                </span>
-
+                <div id="healthText">
+                    100 / 100
+                </div>
             </div>
 
 
-            <div class="inventory">
+            <div id="inventory">
 
-                <div>
+                <div class="item">
                     🪵
-                    <span id="wood">
-                        0
-                    </span>
+                    <span id="wood">0</span>
                 </div>
 
-                <div>
+                <div class="item">
                     🪨
-                    <span id="stone">
-                        0
-                    </span>
+                    <span id="stone">0</span>
                 </div>
 
-                <div>
+                <div class="item">
                     ⛏️
-                    <span id="ore">
-                        0
-                    </span>
+                    <span id="ore">0</span>
                 </div>
 
-                <div>
+                <div class="item">
                     💎
-                    <span id="crystal">
-                        0
-                    </span>
+                    <span id="crystal">0</span>
+                </div>
+
+                <div class="item">
+                    🧱
+                    <span id="block">0</span>
                 </div>
 
             </div>
@@ -114,111 +89,89 @@
         </div>
 
 
-        <!-- Hand / tool -->
-
-        <div id="hand">
-
-            <div id="tool">
-                ⛏️
-            </div>
-
+        <!-- INFO -->
+        <div id="info">
+            WASD = bewegen<br>
+            Klik = verzamelen<br>
+            E = crafting
         </div>
 
 
-        <!-- Hint -->
-
-        <div id="hint">
-            Klik om te minen
-        </div>
-
-
-        <!-- Meldingen -->
-
+        <!-- MESSAGE -->
         <div id="message"></div>
+
+
+        <!-- CRAFTING -->
+        <div id="crafting">
+
+            <h2>CRAFTING</h2>
+
+            <p>
+                Maak nieuwe spullen.
+            </p>
+
+
+            <button class="craftButton" data-craft="axe">
+
+                🪓 BIJL
+
+                <small>
+                    8 hout + 4 steen
+                </small>
+
+            </button>
+
+
+            <button class="craftButton" data-craft="pickaxe">
+
+                ⛏️ PIKHOUWEEL
+
+                <small>
+                    10 steen + 5 erts
+                </small>
+
+            </button>
+
+
+            <button class="craftButton" data-craft="lantern">
+
+                🏮 LANTAARN
+
+                <small>
+                    5 hout + 2 erts
+                </small>
+
+            </button>
+
+
+            <button class="craftButton" data-craft="block">
+
+                🧱 BOUWBLOK
+
+                <small>
+                    5 hout + 5 steen
+                </small>
+
+            </button>
+
+        </div>
+
+
+        <!-- GAME OVER -->
+        <div id="gameOver">
+
+            <h1>GAME OVER</h1>
+
+            <button id="restartButton">
+                OPNIEUW
+            </button>
+
+        </div>
 
     </div>
 
 
-    <!-- JAVASCRIPT -->
-
     <script src="app.js"></script>
-
-
-    <!-- Start functie -->
-    <script>
-
-        function startGame() {
-
-            const menu =
-                document.getElementById("menu");
-
-            const game =
-                document.getElementById("game");
-
-
-            if (!menu || !game) {
-
-                alert(
-                    "Er is iets fout met het HTML-bestand."
-                );
-
-                return;
-            }
-
-
-            // Menu weg
-
-            menu.style.display = "none";
-
-
-            // Game zichtbaar
-
-            game.classList.remove("hidden");
-
-            game.style.display = "block";
-
-
-            // Start de game
-
-            if (
-                typeof beginGame === "function"
-            ) {
-
-                beginGame();
-
-            } else {
-
-                // Als app.js de functie
-                // niet heeft
-
-                if (
-                    typeof running !== "undefined"
-                ) {
-                    running = true;
-                }
-
-                if (
-                    typeof requestAnimationFrame ===
-                    "function"
-                ) {
-
-                    if (
-                        typeof loop ===
-                        "function"
-                    ) {
-
-                        requestAnimationFrame(loop);
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    </script>
 
 </body>
 </html>
-```
