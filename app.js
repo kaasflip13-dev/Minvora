@@ -1,5 +1,6 @@
 // ==========================================
-// MINVORA - COMPLETE APP.JS
+// MINVORA
+// SURVIVAL • MINING • CRAFTING • BUILDING
 // ==========================================
 
 const canvas = document.getElementById("gameCanvas");
@@ -20,6 +21,7 @@ const stoneText = document.getElementById("stone");
 const oreText = document.getElementById("ore");
 const crystalText = document.getElementById("crystal");
 const blockText = document.getElementById("block");
+const machineText = document.getElementById("machine");
 
 const healthBar = document.getElementById("health");
 const healthText = document.getElementById("healthText");
@@ -31,7 +33,7 @@ const crafting = document.getElementById("crafting");
 const craftButtons = document.querySelectorAll(".craftButton");
 
 // ==========================================
-// CANVAS GROOTTE
+// CANVAS
 // ==========================================
 
 function resizeCanvas() {
@@ -61,15 +63,23 @@ const player = {
 // ==========================================
 
 const inventory = {
+
     wood: 0,
     stone: 0,
     ore: 0,
     crystal: 0,
+
     block: 0,
+    machine: 0,
 
     axe: false,
     pickaxe: false,
-    lantern: false
+    lantern: false,
+
+    furnace: 0,
+    workbench: 0,
+    miner: 0,
+    generator: 0
 };
 
 // ==========================================
@@ -100,6 +110,10 @@ let camera = {
 
 let buildMode = false;
 
+// Wat bouwen?
+let selectedBuild = null;
+
+// Muis
 let mouseX = 0;
 let mouseY = 0;
 
@@ -113,10 +127,20 @@ let mouseWorldY = 0;
 let worldTime = 0;
 
 // ==========================================
-// MESSAGE TIMER
+// MESSAGE
 // ==========================================
 
 let messageTimer = 0;
+
+function showMessage(text) {
+
+    if (!message) return;
+
+    message.textContent = text;
+    message.style.opacity = "1";
+
+    messageTimer = 180;
+}
 
 // ==========================================
 // RANDOM
@@ -135,44 +159,52 @@ function distance(x1, y1, x2, y2) {
 }
 
 // ==========================================
-// MESSAGE
+// INVENTORY RESET
 // ==========================================
 
-function showMessage(text) {
+function resetInventory() {
 
-    if (!message) return;
+    inventory.wood = 0;
+    inventory.stone = 0;
+    inventory.ore = 0;
+    inventory.crystal = 0;
 
-    message.textContent = text;
-    message.style.opacity = "1";
+    inventory.block = 0;
+    inventory.machine = 0;
 
-    messageTimer = 180;
+    inventory.axe = false;
+    inventory.pickaxe = false;
+    inventory.lantern = false;
+
+    inventory.furnace = 0;
+    inventory.workbench = 0;
+    inventory.miner = 0;
+    inventory.generator = 0;
 }
 
 // ==========================================
-// UI BIJWERKEN
+// UI
 // ==========================================
 
 function updateUI() {
 
-    if (woodText) {
+    if (woodText)
         woodText.textContent = inventory.wood;
-    }
 
-    if (stoneText) {
+    if (stoneText)
         stoneText.textContent = inventory.stone;
-    }
 
-    if (oreText) {
+    if (oreText)
         oreText.textContent = inventory.ore;
-    }
 
-    if (crystalText) {
+    if (crystalText)
         crystalText.textContent = inventory.crystal;
-    }
 
-    if (blockText) {
+    if (blockText)
         blockText.textContent = inventory.block;
-    }
+
+    if (machineText)
+        machineText.textContent = inventory.machine;
 
     if (healthBar) {
 
@@ -192,44 +224,36 @@ function updateUI() {
             Math.max(
                 0,
                 Math.floor(player.health)
-            ) + " / " + player.maxHealth;
+            ) +
+            " / " +
+            player.maxHealth;
     }
 
     if (info) {
 
         if (buildMode) {
 
+            let selectedText =
+                selectedBuild
+                    ? selectedBuild.toUpperCase()
+                    : "NIETS";
+
             info.innerHTML =
-                "BOUWMODUS<br>" +
-                "Klik = blok plaatsen<br>" +
-                "B = bouwmodus stoppen";
+                "BOUWMODUS: " +
+                selectedText +
+                "<br>" +
+                "Klik = plaatsen<br>" +
+                "B = stoppen";
 
         } else {
 
             info.innerHTML =
                 "WASD = bewegen<br>" +
                 "Klik = verzamelen<br>" +
-                "B = bouwen<br>" +
-                "E = crafting";
+                "E = bouwmenu<br>" +
+                "B = bouwen";
         }
     }
-}
-
-// ==========================================
-// INVENTORY RESET
-// ==========================================
-
-function resetInventory() {
-
-    inventory.wood = 0;
-    inventory.stone = 0;
-    inventory.ore = 0;
-    inventory.crystal = 0;
-    inventory.block = 0;
-
-    inventory.axe = false;
-    inventory.pickaxe = false;
-    inventory.lantern = false;
 }
 
 // ==========================================
@@ -272,7 +296,8 @@ function createWorld() {
             y: y,
             size: 35,
             hp: 3,
-            alive: true
+            alive: true,
+            solid: true
         });
     }
 
@@ -285,7 +310,8 @@ function createWorld() {
             y: random(70, world.height - 70),
             size: 28,
             hp: 2,
-            alive: true
+            alive: true,
+            solid: true
         });
     }
 
@@ -298,7 +324,8 @@ function createWorld() {
             y: random(70, world.height - 70),
             size: 25,
             hp: 2,
-            alive: true
+            alive: true,
+            solid: true
         });
     }
 
@@ -311,7 +338,8 @@ function createWorld() {
             y: random(70, world.height - 70),
             size: 22,
             hp: 1,
-            alive: true
+            alive: true,
+            solid: true
         });
     }
 
@@ -352,7 +380,7 @@ function createWorld() {
 }
 
 // ==========================================
-// GAME STARTEN
+// START GAME
 // ==========================================
 
 function startGame() {
@@ -367,21 +395,22 @@ function startGame() {
 
     resetInventory();
 
+    objects = [];
+    enemies = [];
+
     buildMode = false;
+    selectedBuild = null;
 
     createWorld();
 
-    if (menu) {
+    if (menu)
         menu.style.display = "none";
-    }
 
-    if (game) {
+    if (game)
         game.style.display = "block";
-    }
 
-    if (gameOverScreen) {
+    if (gameOverScreen)
         gameOverScreen.style.display = "none";
-    }
 
     updateUI();
 
@@ -400,26 +429,24 @@ function endGame() {
 
     gameRunning = false;
     gameEnded = true;
+
     buildMode = false;
+    selectedBuild = null;
 
-    if (gameOverScreen) {
+    if (gameOverScreen)
         gameOverScreen.style.display = "flex";
-    }
 
-    showMessage(
-        "GAME OVER"
-    );
+    showMessage("GAME OVER");
 }
 
 // ==========================================
-// OPNIEUW
+// RESTART
 // ==========================================
 
 function restartGame() {
 
-    if (gameOverScreen) {
+    if (gameOverScreen)
         gameOverScreen.style.display = "none";
-    }
 
     startGame();
 }
@@ -437,7 +464,7 @@ window.addEventListener(
 
         keys[key] = true;
 
-        // B = bouwen
+        // B = bouwmodus
         if (
             key === "b" &&
             gameRunning
@@ -448,10 +475,12 @@ window.addEventListener(
             if (buildMode) {
 
                 showMessage(
-                    "Bouwmodus aan!"
+                    "Bouwmodus aan! Kies iets uit het menu."
                 );
 
             } else {
+
+                selectedBuild = null;
 
                 showMessage(
                     "Bouwmodus uit."
@@ -461,7 +490,7 @@ window.addEventListener(
             updateUI();
         }
 
-        // E = crafting
+        // E = bouwmenu
         if (
             key === "e" &&
             gameRunning
@@ -497,6 +526,44 @@ window.addEventListener(
 );
 
 // ==========================================
+// COLLISION MET GEBOUWEN
+// ==========================================
+
+function isBlocked(x, y, radius) {
+
+    for (const object of objects) {
+
+        if (!object.alive) continue;
+
+        if (!object.solid) continue;
+
+        const objectRadius =
+            object.type === "block"
+                ? 20
+                : object.type === "machine"
+                    ? 24
+                    : object.size / 2;
+
+        const d =
+            distance(
+                x,
+                y,
+                object.x,
+                object.y
+            );
+
+        if (
+            d <
+            radius + objectRadius
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ==========================================
 // SPELER BEWEGEN
 // ==========================================
 
@@ -505,21 +572,17 @@ function movePlayer() {
     let dx = 0;
     let dy = 0;
 
-    if (keys["w"]) {
+    if (keys["w"])
         dy--;
-    }
 
-    if (keys["s"]) {
+    if (keys["s"])
         dy++;
-    }
 
-    if (keys["a"]) {
+    if (keys["a"])
         dx--;
-    }
 
-    if (keys["d"]) {
+    if (keys["d"])
         dx++;
-    }
 
     if (dx !== 0 || dy !== 0) {
 
@@ -529,14 +592,37 @@ function movePlayer() {
         dx /= length;
         dy /= length;
 
-        player.x +=
+        const nextX =
+            player.x +
             dx * player.speed;
 
-        player.y +=
+        const nextY =
+            player.y +
             dy * player.speed;
+
+        // Horizontale beweging
+        if (
+            !isBlocked(
+                nextX,
+                player.y,
+                player.size
+            )
+        ) {
+            player.x = nextX;
+        }
+
+        // Verticale beweging
+        if (
+            !isBlocked(
+                player.x,
+                nextY,
+                player.size
+            )
+        ) {
+            player.y = nextY;
+        }
     }
 
-    // Grenzen
     player.x = Math.max(
         player.size,
         Math.min(
@@ -586,7 +672,7 @@ function updateCamera() {
 }
 
 // ==========================================
-// MUIS BEWEGING
+// MUIS
 // ==========================================
 
 canvas.addEventListener(
@@ -597,10 +683,12 @@ canvas.addEventListener(
             canvas.getBoundingClientRect();
 
         mouseX =
-            event.clientX - rect.left;
+            event.clientX -
+            rect.left;
 
         mouseY =
-            event.clientY - rect.top;
+            event.clientY -
+            rect.top;
 
         mouseWorldX =
             mouseX + camera.x;
@@ -611,18 +699,19 @@ canvas.addEventListener(
 );
 
 // ==========================================
-// MUIS KLIK
+// KLIKKEN
 // ==========================================
 
 canvas.addEventListener(
     "click",
     function() {
 
-        if (!gameRunning) return;
+        if (!gameRunning)
+            return;
 
         if (buildMode) {
 
-            placeBlock(
+            placeSelectedObject(
                 mouseWorldX,
                 mouseWorldY
             );
@@ -638,15 +727,15 @@ canvas.addEventListener(
 );
 
 // ==========================================
-// BLOK PLAATSEN
+// MACHINE / BLOK PLAATSEN
 // ==========================================
 
-function placeBlock(x, y) {
+function placeSelectedObject(x, y) {
 
-    if (inventory.block <= 0) {
+    if (!selectedBuild) {
 
         showMessage(
-            "Je hebt geen bouwblokken!"
+            "Kies eerst iets in het bouwmenu."
         );
 
         return;
@@ -669,7 +758,7 @@ function placeBlock(x, y) {
         return;
     }
 
-    if (d < 45) {
+    if (d < 50) {
 
         showMessage(
             "Je staat te dichtbij!"
@@ -678,7 +767,6 @@ function placeBlock(x, y) {
         return;
     }
 
-    // Raster
     const grid = 40;
 
     const blockX =
@@ -687,49 +775,232 @@ function placeBlock(x, y) {
     const blockY =
         Math.round(y / grid) * grid;
 
-    // Controleren op andere objecten
-    for (const object of objects) {
+    // ======================================
+    // CONTROLEREN OF PLEK VRIJ IS
+    // ======================================
 
-        if (!object.alive) continue;
+    if (
+        isBlocked(
+            blockX,
+            blockY,
+            20
+        )
+    ) {
 
-        if (
-            distance(
-                object.x,
-                object.y,
-                blockX,
-                blockY
-            ) < 35
-        ) {
+        showMessage(
+            "Hier staat al iets!"
+        );
+
+        return;
+    }
+
+    // ======================================
+    // GEWOON BLOK
+    // ======================================
+
+    if (selectedBuild === "block") {
+
+        if (inventory.block <= 0) {
 
             showMessage(
-                "Hier staat al iets!"
+                "Je hebt geen bouwblokken!"
             );
 
             return;
         }
+
+        objects.push({
+
+            type: "block",
+
+            x: blockX,
+            y: blockY,
+
+            size: 40,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true
+        });
+
+        inventory.block--;
+
+        showMessage(
+            "🧱 Bouwblok geplaatst!"
+        );
     }
 
-    // Blok maken
-    objects.push({
-        type: "block",
-        x: blockX,
-        y: blockY,
-        size: 40,
-        hp: 999,
-        alive: true
-    });
+    // ======================================
+    // OVEN
+    // ======================================
 
-    inventory.block--;
+    if (selectedBuild === "furnace") {
+
+        if (inventory.furnace <= 0) {
+
+            showMessage(
+                "Je hebt geen oven!"
+            );
+
+            return;
+        }
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "furnace",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true
+        });
+
+        inventory.furnace--;
+
+        showMessage(
+            "🔥 Oven geplaatst!"
+        );
+    }
+
+    // ======================================
+    // WERKBANK
+    // ======================================
+
+    if (selectedBuild === "workbench") {
+
+        if (inventory.workbench <= 0) {
+
+            showMessage(
+                "Je hebt geen werkbank!"
+            );
+
+            return;
+        }
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "workbench",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true
+        });
+
+        inventory.workbench--;
+
+        showMessage(
+            "🛠️ Werkbank geplaatst!"
+        );
+    }
+
+    // ======================================
+    // MIJN MACHINE
+    // ======================================
+
+    if (selectedBuild === "miner") {
+
+        if (inventory.miner <= 0) {
+
+            showMessage(
+                "Je hebt geen mijnmachine!"
+            );
+
+            return;
+        }
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "miner",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true,
+
+            timer: 0
+        });
+
+        inventory.miner--;
+
+        showMessage(
+            "⛏️ Mijnmachine geplaatst!"
+        );
+    }
+
+    // ======================================
+    // GENERATOR
+    // ======================================
+
+    if (selectedBuild === "generator") {
+
+        if (inventory.generator <= 0) {
+
+            showMessage(
+                "Je hebt geen generator!"
+            );
+
+            return;
+        }
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "generator",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true,
+
+            timer: 0
+        });
+
+        inventory.generator--;
+
+        showMessage(
+            "⚡ Generator geplaatst!"
+        );
+    }
 
     updateUI();
-
-    showMessage(
-        "Bouwblok geplaatst!"
-    );
 }
 
 // ==========================================
-// VERZAMELEN
+// OBJECT VERZAMELEN
 // ==========================================
 
 function collectObject(x, y) {
@@ -739,9 +1010,13 @@ function collectObject(x, y) {
 
     for (const object of objects) {
 
-        if (!object.alive) continue;
+        if (!object.alive)
+            continue;
 
-        if (object.type === "block") {
+        if (
+            object.type === "block" ||
+            object.type === "machine"
+        ) {
             continue;
         }
 
@@ -753,9 +1028,8 @@ function collectObject(x, y) {
                 object.y
             );
 
-        if (playerDistance > 130) {
+        if (playerDistance > 130)
             continue;
-        }
 
         const clickDistance =
             distance(
@@ -771,12 +1045,13 @@ function collectObject(x, y) {
         ) {
 
             selected = object;
+
             selectedDistance =
                 clickDistance;
         }
     }
 
-    // Vijand aanvallen
+    // VIJAND AANVALLEN
     for (const enemy of enemies) {
 
         const playerDistance =
@@ -787,9 +1062,8 @@ function collectObject(x, y) {
                 enemy.y
             );
 
-        if (playerDistance > 130) {
+        if (playerDistance > 130)
             continue;
-        }
 
         const clickDistance =
             distance(
@@ -835,7 +1109,7 @@ function collectObject(x, y) {
         return;
     }
 
-    // Boom
+    // BOOM
     if (selected.type === "tree") {
 
         selected.hp--;
@@ -850,7 +1124,7 @@ function collectObject(x, y) {
         );
     }
 
-    // Steen
+    // STEEN
     if (selected.type === "stone") {
 
         selected.hp--;
@@ -865,7 +1139,7 @@ function collectObject(x, y) {
         );
     }
 
-    // Erts
+    // ERTS
     if (selected.type === "ore") {
 
         selected.hp--;
@@ -880,7 +1154,7 @@ function collectObject(x, y) {
         );
     }
 
-    // Kristal
+    // KRISTAL
     if (selected.type === "crystal") {
 
         selected.hp--;
@@ -901,7 +1175,7 @@ function collectObject(x, y) {
 }
 
 // ==========================================
-// RECHTSKLIK = BLOK TERUGPAKKEN
+// RECHTSKLIK BLOK / MACHINE OPHALEN
 // ==========================================
 
 canvas.addEventListener(
@@ -910,8 +1184,11 @@ canvas.addEventListener(
 
         event.preventDefault();
 
-        if (!gameRunning) return;
-        if (!buildMode) return;
+        if (!gameRunning)
+            return;
+
+        if (!buildMode)
+            return;
 
         const rect =
             canvas.getBoundingClientRect();
@@ -928,9 +1205,13 @@ canvas.addEventListener(
 
         for (const object of objects) {
 
-            if (!object.alive) continue;
+            if (!object.alive)
+                continue;
 
-            if (object.type !== "block") {
+            if (
+                object.type !== "block" &&
+                object.type !== "machine"
+            ) {
                 continue;
             }
 
@@ -940,50 +1221,208 @@ canvas.addEventListener(
                     y,
                     object.x,
                     object.y
-                ) < 30
+                ) > 35
+            ) {
+                continue;
+            }
+
+            if (
+                distance(
+                    player.x,
+                    player.y,
+                    object.x,
+                    object.y
+                ) > 220
             ) {
 
-                if (
-                    distance(
-                        player.x,
-                        player.y,
-                        object.x,
-                        object.y
-                    ) > 220
-                ) {
-
-                    showMessage(
-                        "Te ver weg!"
-                    );
-
-                    return;
-                }
-
-                object.alive = false;
-
-                inventory.block++;
-
-                updateUI();
-
                 showMessage(
-                    "Bouwblok teruggepakt!"
+                    "Dat is te ver weg!"
                 );
 
                 return;
             }
+
+            object.alive = false;
+
+            if (object.type === "block") {
+
+                inventory.block++;
+
+                showMessage(
+                    "🧱 Bouwblok teruggepakt!"
+                );
+
+            } else {
+
+                inventory[
+                    object.machineType
+                ]++;
+
+                showMessage(
+                    "⚙️ Machine teruggepakt!"
+                );
+            }
+
+            updateUI();
+
+            return;
         }
     }
 );
 
 // ==========================================
-// VIJANDEN UPDATE
+// VIJAND COLLISION
+// ==========================================
+
+function enemyBlocked(enemy, nextX, nextY) {
+
+    for (const object of objects) {
+
+        if (!object.alive)
+            continue;
+
+        if (!object.solid)
+            continue;
+
+        const radius =
+            object.type === "block"
+                ? 23
+                : object.type === "machine"
+                    ? 25
+                    : object.size / 2;
+
+        const d =
+            distance(
+                nextX,
+                nextY,
+                object.x,
+                object.y
+            );
+
+        if (
+            d <
+            enemy.size + radius
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// ==========================================
+// VIJANDEN
 // ==========================================
 
 function updateEnemies() {
 
     for (const enemy of enemies) {
 
+        const dx =
+            player.x - enemy.x;
+
+        const dy =
+            player.y - enemy.y;
+
         const d =
+            Math.hypot(dx, dy);
+
+        // ==================================
+        // NAAR SPELER LOPEN
+        // ==================================
+
+        if (
+            d < 600 &&
+            d > 35
+        ) {
+
+            const dirX =
+                dx / d;
+
+            const dirY =
+                dy / d;
+
+            const nextX =
+                enemy.x +
+                dirX * enemy.speed;
+
+            const nextY =
+                enemy.y +
+                dirY * enemy.speed;
+
+            // Eerst recht vooruit
+            if (
+                !enemyBlocked(
+                    enemy,
+                    nextX,
+                    nextY
+                )
+            ) {
+
+                enemy.x = nextX;
+                enemy.y = nextY;
+
+            } else {
+
+                // ==================================
+                // OM HET BLOK HEEN LOPEN
+                // ==================================
+
+                const sideX =
+                    -dirY;
+
+                const sideY =
+                    dirX;
+
+                const sideAmount =
+                    enemy.speed * 1.8;
+
+                const option1X =
+                    enemy.x +
+                    sideX * sideAmount;
+
+                const option1Y =
+                    enemy.y +
+                    sideY * sideAmount;
+
+                const option2X =
+                    enemy.x -
+                    sideX * sideAmount;
+
+                const option2Y =
+                    enemy.y -
+                    sideY * sideAmount;
+
+                if (
+                    !enemyBlocked(
+                        enemy,
+                        option1X,
+                        option1Y
+                    )
+                ) {
+
+                    enemy.x = option1X;
+                    enemy.y = option1Y;
+
+                } else if (
+                    !enemyBlocked(
+                        enemy,
+                        option2X,
+                        option2Y
+                    )
+                ) {
+
+                    enemy.x = option2X;
+                    enemy.y = option2Y;
+                }
+            }
+        }
+
+        // ==================================
+        // AANVALLEN
+        // ==================================
+
+        const newDistance =
             distance(
                 enemy.x,
                 enemy.y,
@@ -991,25 +1430,7 @@ function updateEnemies() {
                 player.y
             );
 
-        if (
-            d < 500 &&
-            d > 35
-        ) {
-
-            const dx =
-                (player.x - enemy.x) / d;
-
-            const dy =
-                (player.y - enemy.y) / d;
-
-            enemy.x +=
-                dx * enemy.speed;
-
-            enemy.y +=
-                dy * enemy.speed;
-        }
-
-        if (d < 35) {
+        if (newDistance < 35) {
 
             if (
                 enemy.attackCooldown <= 0
@@ -1050,6 +1471,64 @@ function updateEnemies() {
 }
 
 // ==========================================
+// MACHINES UPDATEN
+// ==========================================
+
+function updateMachines() {
+
+    for (const object of objects) {
+
+        if (!object.alive)
+            continue;
+
+        if (object.type !== "machine")
+            continue;
+
+        if (
+            object.machineType === "miner"
+        ) {
+
+            object.timer++;
+
+            // Elke 10 seconden
+            if (object.timer >= 600) {
+
+                object.timer = 0;
+
+                inventory.ore += 1;
+
+                showMessage(
+                    "⛏️ Mijnmachine vond 1 erts!"
+                );
+
+                updateUI();
+            }
+        }
+
+        if (
+            object.machineType === "generator"
+        ) {
+
+            object.timer++;
+
+            // Elke 15 seconden
+            if (object.timer >= 900) {
+
+                object.timer = 0;
+
+                inventory.crystal += 1;
+
+                showMessage(
+                    "⚡ Generator maakte 1 kristal!"
+                );
+
+                updateUI();
+            }
+        }
+    }
+}
+
+// ==========================================
 // TIJD
 // ==========================================
 
@@ -1067,7 +1546,7 @@ function updateTime() {
 }
 
 // ==========================================
-// GROND TEKENEN
+// GROND
 // ==========================================
 
 function drawGround() {
@@ -1124,12 +1603,13 @@ function drawGround() {
 }
 
 // ==========================================
-// OBJECT TEKENEN
+// OBJECTEN TEKENEN
 // ==========================================
 
 function drawObject(object) {
 
-    if (!object.alive) return;
+    if (!object.alive)
+        return;
 
     const x =
         object.x - camera.x;
@@ -1143,7 +1623,6 @@ function drawObject(object) {
 
     if (object.type === "tree") {
 
-        // Schaduw
         ctx.fillStyle =
             "rgba(0,0,0,0.25)";
 
@@ -1161,7 +1640,6 @@ function drawObject(object) {
 
         ctx.fill();
 
-        // Stam
         ctx.fillStyle = "#70452a";
 
         ctx.fillRect(
@@ -1171,7 +1649,6 @@ function drawObject(object) {
             30
         );
 
-        // Bladeren
         ctx.fillStyle = "#26733a";
 
         ctx.beginPath();
@@ -1316,51 +1793,44 @@ function drawObject(object) {
 
     if (object.type === "block") {
 
-        const size = 40;
-
-        // Schaduw
         ctx.fillStyle =
             "rgba(0,0,0,0.3)";
 
         ctx.fillRect(
             x - 15,
             y - 15,
-            size,
-            size
+            40,
+            40
         );
 
-        // Blok
         ctx.fillStyle = "#8a6544";
 
         ctx.fillRect(
             x - 20,
             y - 20,
-            size,
-            size
+            40,
+            40
         );
 
-        // Bovenkant
         ctx.fillStyle = "#b58a5c";
 
         ctx.fillRect(
             x - 20,
             y - 20,
-            size,
+            40,
             8
         );
 
-        // Rand
         ctx.strokeStyle = "#5d402b";
         ctx.lineWidth = 2;
 
         ctx.strokeRect(
             x - 20,
             y - 20,
-            size,
-            size
+            40,
+            40
         );
 
-        // Middenlijn
         ctx.beginPath();
 
         ctx.moveTo(
@@ -1374,6 +1844,251 @@ function drawObject(object) {
         );
 
         ctx.stroke();
+    }
+
+    // ======================================
+    // MACHINES
+    // ======================================
+
+    if (object.type === "machine") {
+
+        drawMachine(
+            object,
+            x,
+            y
+        );
+    }
+}
+
+// ==========================================
+// MACHINES TEKENEN
+// ==========================================
+
+function drawMachine(object, x, y) {
+
+    const size = 44;
+
+    // Schaduw
+    ctx.fillStyle =
+        "rgba(0,0,0,0.35)";
+
+    ctx.fillRect(
+        x - 18,
+        y - 14,
+        size,
+        size
+    );
+
+    // Basis
+    ctx.fillStyle = "#39434d";
+
+    ctx.fillRect(
+        x - 22,
+        y - 22,
+        size,
+        size
+    );
+
+    ctx.strokeStyle = "#171b20";
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        x - 22,
+        y - 22,
+        size,
+        size
+    );
+
+    // ======================================
+    // OVEN
+    // ======================================
+
+    if (
+        object.machineType === "furnace"
+    ) {
+
+        ctx.fillStyle = "#222";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y + 5,
+            12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle = "#ff7b22";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y + 5,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle = "#ffd45a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y + 5,
+            3,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    // ======================================
+    // WERKBANK
+    // ======================================
+
+    if (
+        object.machineType === "workbench"
+    ) {
+
+        ctx.fillStyle = "#9a6538";
+
+        ctx.fillRect(
+            x - 18,
+            y - 13,
+            36,
+            10
+        );
+
+        ctx.fillRect(
+            x - 15,
+            y - 3,
+            7,
+            20
+        );
+
+        ctx.fillRect(
+            x + 8,
+            y - 3,
+            7,
+            20
+        );
+
+        ctx.strokeStyle = "#d69a5c";
+
+        ctx.strokeRect(
+            x - 18,
+            y - 13,
+            36,
+            10
+        );
+    }
+
+    // ======================================
+    // MIJN MACHINE
+    // ======================================
+
+    if (
+        object.machineType === "miner"
+    ) {
+
+        ctx.fillStyle = "#555";
+
+        ctx.fillRect(
+            x - 15,
+            y - 8,
+            30,
+            18
+        );
+
+        ctx.fillStyle = "#aaa";
+
+        ctx.fillRect(
+            x - 5,
+            y - 18,
+            10,
+            15
+        );
+
+        ctx.strokeStyle = "#e2b84b";
+        ctx.lineWidth = 4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            y - 15
+        );
+
+        ctx.lineTo(
+            x + 18,
+            y - 25
+        );
+
+        ctx.stroke();
+    }
+
+    // ======================================
+    // GENERATOR
+    // ======================================
+
+    if (
+        object.machineType === "generator"
+    ) {
+
+        ctx.fillStyle = "#263b4a";
+
+        ctx.fillRect(
+            x - 17,
+            y - 17,
+            34,
+            34
+        );
+
+        ctx.fillStyle = "#7ee7ff";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x + 3,
+            y - 15
+        );
+
+        ctx.lineTo(
+            x - 5,
+            y + 1
+        );
+
+        ctx.lineTo(
+            x + 3,
+            y + 1
+        );
+
+        ctx.lineTo(
+            x - 3,
+            y + 15
+        );
+
+        ctx.lineTo(
+            x + 10,
+            y - 4
+        );
+
+        ctx.lineTo(
+            x + 2,
+            y - 4
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
     }
 }
 
@@ -1389,7 +2104,6 @@ function drawEnemy(enemy) {
     const y =
         enemy.y - camera.y;
 
-    // Schaduw
     ctx.fillStyle =
         "rgba(0,0,0,0.3)";
 
@@ -1407,7 +2121,6 @@ function drawEnemy(enemy) {
 
     ctx.fill();
 
-    // Lichaam
     ctx.fillStyle = "#8c3f8f";
 
     ctx.beginPath();
@@ -1422,7 +2135,6 @@ function drawEnemy(enemy) {
 
     ctx.fill();
 
-    // Ogen
     ctx.fillStyle = "white";
 
     ctx.beginPath();
@@ -1445,7 +2157,6 @@ function drawEnemy(enemy) {
 
     ctx.fill();
 
-    // Pupillen
     ctx.fillStyle = "#111";
 
     ctx.beginPath();
@@ -1504,7 +2215,6 @@ function drawPlayer() {
     const y =
         player.y - camera.y;
 
-    // Schaduw
     ctx.fillStyle =
         "rgba(0,0,0,0.35)";
 
@@ -1522,7 +2232,6 @@ function drawPlayer() {
 
     ctx.fill();
 
-    // Lichaam
     ctx.fillStyle = "#3d8cff";
 
     ctx.beginPath();
@@ -1537,13 +2246,11 @@ function drawPlayer() {
 
     ctx.fill();
 
-    // Rand
     ctx.strokeStyle = "#b9dcff";
     ctx.lineWidth = 2;
 
     ctx.stroke();
 
-    // Hoofd
     ctx.fillStyle = "#ffd0a6";
 
     ctx.beginPath();
@@ -1558,7 +2265,6 @@ function drawPlayer() {
 
     ctx.fill();
 
-    // Pet / haar
     ctx.fillStyle = "#222";
 
     ctx.fillRect(
@@ -1570,14 +2276,16 @@ function drawPlayer() {
 }
 
 // ==========================================
-// BOUWPREVIEW
+// BOUW PREVIEW
 // ==========================================
 
 function drawBuildPreview() {
 
-    if (!buildMode) return;
+    if (!buildMode)
+        return;
 
-    if (inventory.block <= 0) return;
+    if (!selectedBuild)
+        return;
 
     const grid = 40;
 
@@ -1616,41 +2324,45 @@ function drawBuildPreview() {
             player.y,
             x,
             y
-        ) < 45
+        ) < 50
     ) {
         canBuild = false;
     }
 
-    for (const object of objects) {
-
-        if (!object.alive) continue;
-
-        if (
-            distance(
-                object.x,
-                object.y,
-                x,
-                y
-            ) < 35
-        ) {
-
-            canBuild = false;
-            break;
-        }
+    if (
+        isBlocked(
+            x,
+            y,
+            20
+        )
+    ) {
+        canBuild = false;
     }
 
-    ctx.globalAlpha = 0.45;
+    ctx.globalAlpha = 0.5;
 
-    ctx.fillStyle =
-        canBuild
-            ? "#c8945c"
-            : "#d34b4b";
+    if (
+        selectedBuild === "block"
+    ) {
+
+        ctx.fillStyle =
+            canBuild
+                ? "#c8945c"
+                : "#d34b4b";
+
+    } else {
+
+        ctx.fillStyle =
+            canBuild
+                ? "#668899"
+                : "#d34b4b";
+    }
 
     ctx.fillRect(
-        screenX - 20,
-        screenY - 20,
-        40,
-        40
+        screenX - 22,
+        screenY - 22,
+        44,
+        44
     );
 
     ctx.globalAlpha = 1;
@@ -1663,10 +2375,10 @@ function drawBuildPreview() {
     ctx.lineWidth = 2;
 
     ctx.strokeRect(
-        screenX - 20,
-        screenY - 20,
-        40,
-        40
+        screenX - 22,
+        screenY - 22,
+        44,
+        44
     );
 }
 
@@ -1710,23 +2422,18 @@ function draw() {
 
     drawGround();
 
-    // Objecten
     for (const object of objects) {
         drawObject(object);
     }
 
-    // Vijanden
     for (const enemy of enemies) {
         drawEnemy(enemy);
     }
 
-    // Speler
     drawPlayer();
 
-    // Bouwpreview
     drawBuildPreview();
 
-    // Nacht
     drawDayNight();
 }
 
@@ -1736,13 +2443,17 @@ function draw() {
 
 function gameLoop() {
 
-    if (!gameRunning) return;
+    if (!gameRunning)
+        return;
 
-    if (gameEnded) return;
+    if (gameEnded)
+        return;
 
     movePlayer();
 
     updateEnemies();
+
+    updateMachines();
 
     updateCamera();
 
@@ -1780,15 +2491,12 @@ craftButtons.forEach(
             "click",
             function() {
 
-                // JUISTE HTML:
-                // data-craft="..."
-
                 const item =
                     button.dataset.craft;
 
-                // --------------------------
+                // ==================================
                 // BIJL
-                // --------------------------
+                // ==================================
 
                 if (item === "axe") {
 
@@ -1818,14 +2526,14 @@ craftButtons.forEach(
                     } else {
 
                         showMessage(
-                            "Je hebt 8 hout + 4 steen nodig."
+                            "8 hout + 4 steen nodig."
                         );
                     }
                 }
 
-                // --------------------------
+                // ==================================
                 // PIKHOUWEEL
-                // --------------------------
+                // ==================================
 
                 if (item === "pickaxe") {
 
@@ -1855,14 +2563,14 @@ craftButtons.forEach(
                     } else {
 
                         showMessage(
-                            "Je hebt 10 steen + 5 erts nodig."
+                            "10 steen + 5 erts nodig."
                         );
                     }
                 }
 
-                // --------------------------
+                // ==================================
                 // LANTAARN
-                // --------------------------
+                // ==================================
 
                 if (item === "lantern") {
 
@@ -1892,14 +2600,14 @@ craftButtons.forEach(
                     } else {
 
                         showMessage(
-                            "Je hebt 5 hout + 2 erts nodig."
+                            "5 hout + 2 erts nodig."
                         );
                     }
                 }
 
-                // --------------------------
+                // ==================================
                 // BOUWBLOK
-                // --------------------------
+                // ==================================
 
                 if (item === "block") {
 
@@ -1914,18 +2622,274 @@ craftButtons.forEach(
                         inventory.block++;
 
                         showMessage(
-                            "🧱 Bouwblok gemaakt! Druk B."
+                            "🧱 Bouwblok gemaakt!"
                         );
 
                     } else {
 
                         showMessage(
-                            "Je hebt 5 hout + 5 steen nodig."
+                            "5 hout + 5 steen nodig."
+                        );
+                    }
+                }
+
+                // ==================================
+                // OVEN
+                // ==================================
+
+                if (item === "furnace") {
+
+                    if (
+                        inventory.stone >= 12 &&
+                        inventory.ore >= 4
+                    ) {
+
+                        inventory.stone -= 12;
+                        inventory.ore -= 4;
+
+                        inventory.furnace++;
+                        inventory.machine++;
+
+                        showMessage(
+                            "🔥 Oven gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "12 steen + 4 erts nodig."
+                        );
+                    }
+                }
+
+                // ==================================
+                // WERKBANK
+                // ==================================
+
+                if (item === "workbench") {
+
+                    if (
+                        inventory.wood >= 10 &&
+                        inventory.stone >= 6
+                    ) {
+
+                        inventory.wood -= 10;
+                        inventory.stone -= 6;
+
+                        inventory.workbench++;
+                        inventory.machine++;
+
+                        showMessage(
+                            "🛠️ Werkbank gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "10 hout + 6 steen nodig."
+                        );
+                    }
+                }
+
+                // ==================================
+                // MIJN MACHINE
+                // ==================================
+
+                if (item === "miner") {
+
+                    if (
+                        inventory.stone >= 15 &&
+                        inventory.ore >= 10 &&
+                        inventory.crystal >= 2
+                    ) {
+
+                        inventory.stone -= 15;
+                        inventory.ore -= 10;
+                        inventory.crystal -= 2;
+
+                        inventory.miner++;
+                        inventory.machine++;
+
+                        showMessage(
+                            "⛏️ Mijnmachine gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "15 steen + 10 erts + 2 kristal nodig."
+                        );
+                    }
+                }
+
+                // ==================================
+                // GENERATOR
+                // ==================================
+
+                if (item === "generator") {
+
+                    if (
+                        inventory.ore >= 10 &&
+                        inventory.crystal >= 5
+                    ) {
+
+                        inventory.ore -= 10;
+                        inventory.crystal -= 5;
+
+                        inventory.generator++;
+                        inventory.machine++;
+
+                        showMessage(
+                            "⚡ Generator gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "10 erts + 5 kristal nodig."
                         );
                     }
                 }
 
                 updateUI();
+            }
+        );
+    }
+);
+
+// ==========================================
+// MACHINE KIEZEN VIA BOUWMENU
+// ==========================================
+
+craftButtons.forEach(
+    function(button) {
+
+        button.addEventListener(
+            "dblclick",
+            function() {
+
+                const item =
+                    button.dataset.craft;
+
+                if (
+                    item === "block" ||
+                    item === "furnace" ||
+                    item === "workbench" ||
+                    item === "miner" ||
+                    item === "generator"
+                ) {
+
+                    buildMode = true;
+
+                    selectedBuild = item;
+
+                    if (crafting) {
+                        crafting.style.display =
+                            "none";
+                    }
+
+                    showMessage(
+                        "Gekozen: " +
+                        item +
+                        ". Klik om te plaatsen!"
+                    );
+
+                    updateUI();
+                }
+            }
+        );
+    }
+);
+
+// ==========================================
+// GEWONE KLIK OP CRAFTKNOP:
+// NA MAKEN DIRECT SELECTEREN
+// ==========================================
+
+craftButtons.forEach(
+    function(button) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                const item =
+                    button.dataset.craft;
+
+                if (
+                    item === "block" &&
+                    inventory.block > 0
+                ) {
+
+                    selectedBuild = "block";
+                    buildMode = true;
+
+                    showMessage(
+                        "🧱 Bouwblok geselecteerd. Klik om te plaatsen!"
+                    );
+
+                    updateUI();
+                }
+
+                if (
+                    item === "furnace" &&
+                    inventory.furnace > 0
+                ) {
+
+                    selectedBuild = "furnace";
+                    buildMode = true;
+
+                    showMessage(
+                        "🔥 Oven geselecteerd. Klik om te plaatsen!"
+                    );
+
+                    updateUI();
+                }
+
+                if (
+                    item === "workbench" &&
+                    inventory.workbench > 0
+                ) {
+
+                    selectedBuild = "workbench";
+                    buildMode = true;
+
+                    showMessage(
+                        "🛠️ Werkbank geselecteerd. Klik om te plaatsen!"
+                    );
+
+                    updateUI();
+                }
+
+                if (
+                    item === "miner" &&
+                    inventory.miner > 0
+                ) {
+
+                    selectedBuild = "miner";
+                    buildMode = true;
+
+                    showMessage(
+                        "⛏️ Mijnmachine geselecteerd. Klik om te plaatsen!"
+                    );
+
+                    updateUI();
+                }
+
+                if (
+                    item === "generator" &&
+                    inventory.generator > 0
+                ) {
+
+                    selectedBuild = "generator";
+                    buildMode = true;
+
+                    showMessage(
+                        "⚡ Generator geselecteerd. Klik om te plaatsen!"
+                    );
+
+                    updateUI();
+                }
             }
         );
     }
@@ -1944,7 +2908,7 @@ if (startButton) {
 }
 
 // ==========================================
-// OPNIEUW KNOP
+// RESTART
 // ==========================================
 
 if (restartButton) {
@@ -1959,24 +2923,20 @@ if (restartButton) {
 // BEGINSTATUS
 // ==========================================
 
-if (game) {
+if (game)
     game.style.display = "none";
-}
 
-if (menu) {
+if (menu)
     menu.style.display = "flex";
-}
 
-if (gameOverScreen) {
+if (gameOverScreen)
     gameOverScreen.style.display = "none";
-}
 
-if (crafting) {
+if (crafting)
     crafting.style.display = "none";
-}
 
 updateUI();
 
 console.log(
-    "MINVORA app.js is geladen!"
+    "MINVORA - alles geladen!"
 );
