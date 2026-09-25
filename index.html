@@ -1,1 +1,87 @@
 
+```html
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minvora</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="menu">
+        <h1>MINVORA</h1>
+        <p>Mine • Verzamel • Craft</p>
+        <button id="startBtn">START GAME</button>
+        <p class="controls">WASD = bewegen | Klik = minen | E = craften</p>
+    </div>
+
+    <div id="game" class="hidden">
+
+        <header>
+            <div>
+                <h2>MINVORA</h2>
+                <span id="status">Klaar om te minen!</span>
+            </div>
+
+            <div class="stats">
+                ⛏️ <b id="ore">0</b>
+                🪵 <b id="wood">0</b>
+                💎 <b id="crystal">0</b>
+            </div>
+        </header>
+
+        <main>
+
+            <canvas id="gameCanvas" width="900" height="560"></canvas>
+
+            <aside>
+
+                <h3>INVENTORY</h3>
+
+                <div class="inventory">
+                    <div>⛏️ Erts <b id="invOre">0</b></div>
+                    <div>🪵 Hout <b id="invWood">0</b></div>
+                    <div>💎 Kristal <b id="invCrystal">0</b></div>
+                    <div>🧱 Steen <b id="invStone">0</b></div>
+                </div>
+
+                <h3>CRAFTING</h3>
+
+                <button class="craft" data-item="pickaxe">
+                    ⛏️ IJZEREN PICKAXE
+                    <small>10 erts + 5 hout</small>
+                </button>
+
+                <button class="craft" data-item="torch">
+                    🔥 FAKKELS x5
+                    <small>3 hout + 1 erts</small>
+                </button>
+
+                <button class="craft" data-item="crystal">
+                    💎 KRISTALBOM
+                    <small>5 kristallen + 5 erts</small>
+                </button>
+
+                <p class="help">
+                    WASD of pijltjes = bewegen<br>
+                    Klik op een blok = minen<br>
+                    E = pickaxe craften
+                </p>
+
+            </aside>
+
+        </main>
+
+    </div>
+
+    <div id="message"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+```
+
+
