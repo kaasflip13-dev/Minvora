@@ -4,104 +4,186 @@
     padding: 0;
 }
 
-html,
 body {
-    width: 100%;
-    height: 100%;
-
     overflow: hidden;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    background: #07100c;
-
+    background: #05080c;
+    font-family: Arial, Helvetica, sans-serif;
     color: white;
 }
 
 
-/* ==============================
-   MENU
-============================== */
+/* =========================
+   START MENU
+========================= */
 
 #menu {
-
     position: fixed;
-
     inset: 0;
 
     display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
     justify-content: center;
-
-    text-align: center;
+    align-items: center;
 
     background:
         radial-gradient(
-            circle,
-            #244d38 0%,
-            #0b2117 45%,
-            #030806 100%
+            circle at center,
+            #193a2c 0%,
+            #0b1715 45%,
+            #030608 100%
         );
 
     z-index: 100;
 }
 
 
-.logo {
+/* Achtergrond */
 
-    font-size: 75px;
-
-    font-weight: 900;
-
-    letter-spacing: 12px;
-
-    color: #dffff0;
-
-    text-shadow:
-        0 0 10px #52ed91,
-        0 0 35px #20965b,
-        0 8px 20px #000;
-
-}
-
-
-.subtitle {
-
-    margin-top: 10px;
-
-    margin-bottom: 45px;
-
-    letter-spacing: 5px;
-
-    color: #9ac8aa;
-
-}
-
-
-#startButton {
-
-    padding: 18px 55px;
-
-    border: 2px solid #61ed98;
-
-    border-radius: 12px;
+.menuBackground {
+    position: absolute;
+    inset: 0;
 
     background:
         linear-gradient(
-            #38bd70,
-            #17683d
+            rgba(0,0,0,0.25),
+            rgba(0,0,0,0.7)
+        ),
+        repeating-linear-gradient(
+            45deg,
+            transparent 0px,
+            transparent 40px,
+            rgba(255,255,255,0.015) 41px,
+            transparent 42px
+        );
+
+    pointer-events: none;
+}
+
+
+/* Licht achter logo */
+
+.menuBackground::after {
+    content: "";
+
+    position: absolute;
+
+    width: 650px;
+    height: 650px;
+
+    left: 50%;
+    top: 45%;
+
+    transform: translate(-50%, -50%);
+
+    background: radial-gradient(
+        circle,
+        rgba(62, 220, 140, 0.16),
+        transparent 65%
+    );
+
+    filter: blur(15px);
+}
+
+
+/* Inhoud */
+
+.menuContent {
+    position: relative;
+
+    width: min(520px, 90vw);
+
+    text-align: center;
+
+    padding: 45px 35px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20,32,30,0.95),
+            rgba(7,12,14,0.96)
+        );
+
+    border: 1px solid rgba(116,255,183,0.25);
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 30px 100px rgba(0,0,0,0.75),
+        0 0 50px rgba(55,220,140,0.08);
+
+    backdrop-filter: blur(12px);
+}
+
+
+/* Logo */
+
+.gameLogo {
+    font-size: clamp(55px, 10vw, 90px);
+
+    font-weight: 900;
+
+    letter-spacing: 8px;
+
+    color: #dfffea;
+
+    text-shadow:
+        0 0 10px rgba(82,255,164,0.8),
+        0 0 35px rgba(82,255,164,0.35);
+
+    margin-bottom: 5px;
+}
+
+
+.gameSubtitle {
+    color: #76dca2;
+
+    font-size: 13px;
+
+    letter-spacing: 5px;
+
+    margin-bottom: 25px;
+}
+
+
+.menuLine {
+    height: 1px;
+
+    width: 80%;
+
+    margin: 0 auto 30px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #57d994,
+            transparent
+        );
+}
+
+
+/* Knoppen */
+
+.menuButton {
+    width: 100%;
+
+    padding: 18px;
+
+    margin-top: 13px;
+
+    border: 1px solid rgba(109,255,171,0.3);
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #246d49,
+            #123c2b
         );
 
     color: white;
 
-    font-size: 20px;
+    font-size: 18px;
 
     font-weight: bold;
 
@@ -109,499 +191,686 @@ body {
 
     cursor: pointer;
 
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        background 0.15s;
+}
+
+
+.menuButton span {
+    margin-right: 10px;
+}
+
+
+.menuButton:hover {
+    transform: translateY(-3px);
+
+    background:
+        linear-gradient(
+            135deg,
+            #328c5d,
+            #185438
+        );
+
     box-shadow:
-        0 0 25px
-        rgba(72, 238, 142, .25);
-
-    transition: .2s;
-
+        0 10px 30px rgba(52,220,133,0.2);
 }
 
 
-#startButton:hover {
-
-    transform: scale(1.07);
-
-    box-shadow:
-        0 0 40px
-        rgba(72, 238, 142, .55);
-
+.menuButton:active {
+    transform: translateY(0);
 }
 
 
-.menuText {
-
-    margin-top: 30px;
-
-    line-height: 1.8;
-
-    color: #91ad9e;
-
+.menuButton.secondary {
+    background:
+        linear-gradient(
+            135deg,
+            #303b45,
+            #171e24
+        );
 }
 
 
-/* ==============================
-   GAME
-============================== */
+.menuButton.secondary:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #45535f,
+            #202b33
+        );
+}
 
-#game {
 
+/* Controls */
+
+.controls {
+    margin-top: 28px;
+
+    color: #81918b;
+
+    font-size: 12px;
+
+    line-height: 2;
+
+    letter-spacing: 2px;
+}
+
+
+.version {
+    margin-top: 20px;
+
+    color: #53635d;
+
+    font-size: 11px;
+}
+
+
+/* =========================
+   ACHIEVEMENTS SCHERM
+========================= */
+
+#achievementScreen {
     position: fixed;
 
     inset: 0;
 
     display: none;
 
-    background: #17291c;
+    justify-content: center;
+    align-items: center;
 
+    background:
+        rgba(2,5,7,0.88);
+
+    backdrop-filter: blur(10px);
+
+    z-index: 200;
 }
 
 
-#game.active {
+.achievementPanel {
+    position: relative;
 
-    display: block;
+    width: min(700px, 92vw);
+    max-height: 85vh;
 
+    overflow-y: auto;
+
+    padding: 35px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #14231f,
+            #080d10
+        );
+
+    border: 1px solid rgba(110,255,170,0.3);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 30px 100px rgba(0,0,0,0.8);
+}
+
+
+.achievementTitle {
+    text-align: center;
+
+    font-size: 34px;
+
+    font-weight: 900;
+
+    letter-spacing: 3px;
+
+    color: #e7fff1;
+
+    margin-bottom: 8px;
+}
+
+
+.achievementSubtitle {
+    text-align: center;
+
+    color: #7e9b8c;
+
+    margin-bottom: 25px;
+}
+
+
+/* Achievement kaart */
+
+.achievement {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 18px;
+
+    margin-bottom: 12px;
+
+    border-radius: 12px;
+
+    border: 1px solid rgba(255,255,255,0.07);
+
+    background:
+        rgba(255,255,255,0.035);
+}
+
+
+.achievementIcon {
+    width: 55px;
+    height: 55px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    font-size: 28px;
+
+    background: #26332f;
+}
+
+
+.achievementInfo {
+    flex: 1;
+}
+
+
+.achievementName {
+    font-size: 17px;
+
+    font-weight: bold;
+
+    margin-bottom: 5px;
+}
+
+
+.achievementDescription {
+    color: #8da198;
+
+    font-size: 13px;
+}
+
+
+.achievement.locked {
+    opacity: 0.4;
+}
+
+
+.achievement.unlocked {
+    border-color:
+        rgba(90,255,160,0.35);
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(49,150,92,0.16),
+            rgba(255,255,255,0.025)
+        );
+}
+
+
+.achievement.unlocked .achievementIcon {
+    background: #255b3e;
+
+    box-shadow:
+        0 0 20px rgba(73,255,148,0.15);
+}
+
+
+.status {
+    font-size: 11px;
+
+    font-weight: bold;
+
+    letter-spacing: 1px;
+
+    color: #69e59a;
+}
+
+
+.locked .status {
+    color: #68746f;
+}
+
+
+/* Sluitknop */
+
+.closeButton {
+    position: absolute;
+
+    top: 15px;
+    right: 15px;
+
+    width: 40px;
+    height: 40px;
+
+    border: 0;
+
+    border-radius: 50%;
+
+    background: #202b2c;
+
+    color: white;
+
+    font-size: 18px;
+
+    cursor: pointer;
+}
+
+
+.closeButton:hover {
+    background: #384849;
+}
+
+
+/* =========================
+   GAME
+========================= */
+
+#game {
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    background: #18351f;
 }
 
 
 #gameCanvas {
-
     position: absolute;
 
     inset: 0;
 
     width: 100%;
-
     height: 100%;
 
-    display: block;
-
+    cursor: crosshair;
 }
 
 
-/* ==============================
+/* =========================
    HUD
-============================== */
+========================= */
 
 #hud {
+    position: fixed;
 
-    position: absolute;
-
-    top: 15px;
-
-    left: 15px;
-
-    right: 15px;
+    top: 18px;
+    left: 18px;
+    right: 18px;
 
     display: flex;
 
-    justify-content:
-        space-between;
+    justify-content: space-between;
 
-    align-items:
-        flex-start;
+    align-items: flex-start;
 
     pointer-events: none;
 
+    z-index: 10;
 }
 
 
 #healthBox {
-
-    width: 230px;
+    min-width: 210px;
 
     padding: 12px;
 
     background:
-        rgba(5, 15, 10, .8);
+        rgba(5,10,10,0.8);
 
     border:
-        1px solid
-        rgba(130, 255, 170, .25);
+        1px solid rgba(255,255,255,0.1);
 
     border-radius: 10px;
-
 }
 
 
 .hudTitle {
+    font-size: 11px;
 
-    font-size: 12px;
+    letter-spacing: 2px;
 
-    color: #a7cbb4;
+    color: #a9b7b1;
 
     margin-bottom: 7px;
-
 }
 
 
 .healthBar {
-
     width: 100%;
-
     height: 12px;
 
-    background: #101713;
+    background: #252b2b;
 
     border-radius: 20px;
 
     overflow: hidden;
-
 }
 
 
 #health {
-
     width: 100%;
-
     height: 100%;
 
     background:
         linear-gradient(
             90deg,
-            #e73e50,
-            #ff8d4f
+            #e63d3d,
+            #62e36e
         );
 
-    transition: .2s;
-
+    transition: width 0.2s;
 }
 
 
 #healthText {
-
     margin-top: 5px;
 
-    font-size: 11px;
+    text-align: right;
 
-    color: #91aa9a;
+    font-size: 12px;
 
+    color: #cbd4d0;
 }
 
 
 #inventory {
-
     display: flex;
 
-    gap: 7px;
+    gap: 8px;
 
+    flex-wrap: wrap;
+
+    justify-content: flex-end;
 }
 
 
 .item {
-
-    min-width: 60px;
+    min-width: 52px;
 
     padding: 10px;
 
     text-align: center;
 
-    border-radius: 9px;
-
     background:
-        rgba(5, 15, 10, .8);
+        rgba(5,10,10,0.85);
 
     border:
-        1px solid
-        rgba(130, 255, 170, .2);
+        1px solid rgba(255,255,255,0.1);
+
+    border-radius: 9px;
 
     font-size: 18px;
-
 }
 
 
 .item span {
+    display: block;
 
-    margin-left: 4px;
-
-    font-size: 14px;
-
-    color: #e1ffeb;
-
-}
-
-
-/* ==============================
-   INFO
-============================== */
-
-#info {
-
-    position: absolute;
-
-    bottom: 15px;
-
-    left: 15px;
-
-    padding: 10px 14px;
-
-    background:
-        rgba(5, 15, 10, .75);
-
-    border-radius: 8px;
-
-    color: #a2b9aa;
+    margin-top: 4px;
 
     font-size: 12px;
 
-    pointer-events: none;
-
+    color: #d8e2dd;
 }
 
 
-/* ==============================
-   MESSAGE
-============================== */
+/* Info */
 
-#message {
+#info {
+    position: fixed;
 
-    position: absolute;
+    bottom: 18px;
+    left: 18px;
 
-    left: 50%;
+    padding: 12px 16px;
 
-    bottom: 80px;
-
-    transform:
-        translateX(-50%)
-        translateY(20px);
-
-    padding: 12px 22px;
+    background:
+        rgba(5,10,10,0.82);
 
     border-radius: 9px;
 
+    color: #b7c4be;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+    z-index: 10;
+
+    pointer-events: none;
+}
+
+
+/* Message */
+
+#message {
+    position: fixed;
+
+    left: 50%;
+    bottom: 25px;
+
+    transform: translateX(-50%);
+
+    padding: 12px 22px;
+
     background:
-        rgba(3, 9, 6, .92);
+        rgba(5,10,10,0.9);
 
     border:
-        1px solid
-        #55df8b;
+        1px solid rgba(105,255,165,0.25);
+
+    border-radius: 20px;
 
     color: white;
 
     opacity: 0;
 
-    transition: .2s;
+    transition: opacity 0.2s;
+
+    z-index: 20;
 
     pointer-events: none;
-
 }
 
 
-#message.show {
-
-    opacity: 1;
-
-    transform:
-        translateX(-50%)
-        translateY(0);
-
-}
-
-
-/* ==============================
+/* =========================
    CRAFTING
-============================== */
+========================= */
 
 #crafting {
+    position: fixed;
 
-    position: absolute;
+    top: 50%;
+    left: 50%;
 
-    top: 100px;
+    transform: translate(-50%, -50%);
 
-    right: 25px;
+    width: min(430px, 90vw);
 
-    width: 300px;
+    max-height: 85vh;
 
-    padding: 18px;
+    overflow-y: auto;
+
+    padding: 25px;
 
     background:
-        rgba(5, 15, 10, .94);
+        rgba(8,14,15,0.97);
 
     border:
-        1px solid
-        rgba(100, 240, 145, .3);
+        1px solid rgba(100,255,160,0.25);
 
-    border-radius: 12px;
+    border-radius: 15px;
 
-    display: none;
+    box-shadow:
+        0 30px 100px rgba(0,0,0,0.7);
 
-}
-
-
-#crafting.open {
-
-    display: block;
-
+    z-index: 50;
 }
 
 
 #crafting h2 {
+    text-align: center;
 
-    color: #76e99a;
-
-    margin-bottom: 5px;
-
+    margin-bottom: 8px;
 }
 
 
 #crafting p {
+    text-align: center;
 
-    color: #82978b;
+    color: #8b9994;
+
+    margin-bottom: 18px;
+}
+
+
+#crafting h3 {
+    color: #68db95;
 
     font-size: 12px;
 
-    margin-bottom: 12px;
+    letter-spacing: 2px;
 
+    margin-top: 15px;
+
+    margin-bottom: 7px;
 }
 
 
 .craftButton {
-
     width: 100%;
 
     padding: 12px;
 
-    margin-top: 7px;
+    margin-bottom: 7px;
 
-    text-align: left;
-
-    border:
-        1px solid
-        rgba(120, 240, 155, .2);
+    border: 1px solid rgba(255,255,255,0.08);
 
     border-radius: 8px;
 
-    background: #0c1c13;
+    background: #1a2524;
 
     color: white;
 
-    cursor: pointer;
+    text-align: left;
 
+    cursor: pointer;
 }
 
 
 .craftButton:hover {
-
-    background: #173723;
-
-    border-color: #62e892;
-
+    background: #273934;
 }
 
 
 .craftButton small {
-
     display: block;
 
+    color: #82928b;
+
     margin-top: 4px;
-
-    color: #789083;
-
 }
 
 
-/* ==============================
+/* =========================
    GAME OVER
-============================== */
+========================= */
 
 #gameOver {
-
-    position: absolute;
+    position: fixed;
 
     inset: 0;
 
     display: none;
 
-    flex-direction: column;
-
     justify-content: center;
-
     align-items: center;
 
+    flex-direction: column;
+
     background:
-        rgba(0, 0, 0, .85);
+        rgba(0,0,0,0.8);
 
-    z-index: 50;
-
-}
-
-
-#gameOver.show {
-
-    display: flex;
-
+    z-index: 100;
 }
 
 
 #gameOver h1 {
-
     font-size: 60px;
 
-    color: #ff6670;
-
-    margin-bottom: 20px;
-
+    margin-bottom: 25px;
 }
 
 
 #restartButton {
+    padding: 15px 40px;
 
-    padding: 14px 35px;
+    border: 0;
 
-    border: none;
+    border-radius: 8px;
 
-    border-radius: 9px;
-
-    background: #27804b;
+    background: #26784d;
 
     color: white;
 
-    font-size: 16px;
+    font-size: 18px;
 
     font-weight: bold;
 
     cursor: pointer;
-
 }
 
 
 #restartButton:hover {
-
-    background: #36a861;
-
+    background: #349a63;
 }
 
 
-/* ==============================
-   KLEIN SCHERM
-============================== */
+/* =========================
+   MOBIEL
+========================= */
 
-@media(max-width: 700px) {
+@media (max-width: 600px) {
 
-    .logo {
-
-        font-size: 43px;
-
-        letter-spacing: 6px;
-
+    .menuContent {
+        padding: 30px 22px;
     }
 
+    .gameLogo {
+        font-size: 48px;
+        letter-spacing: 5px;
+    }
+
+    .gameSubtitle {
+        font-size: 9px;
+        letter-spacing: 3px;
+    }
+
+    #hud {
+        flex-direction: column;
+        gap: 8px;
+    }
 
     #inventory {
-
-        max-width: 300px;
-
-        flex-wrap: wrap;
-
-        justify-content: flex-end;
-
+        justify-content: flex-start;
     }
 
-
-    #healthBox {
-
-        width: 170px;
-
+    .achievementPanel {
+        padding: 25px 18px;
     }
-
 }
