@@ -25,9 +25,10 @@
         </button>
 
         <div class="menuText">
-            WASD om te bewegen<br>
-            Klik op grondstoffen om ze te verzamelen<br>
-            E opent crafting
+            WASD = bewegen<br>
+            Klik = verzamelen<br>
+            E = bouw/crafting menu<br>
+            B = bouwmodus
         </div>
 
     </div>
@@ -43,6 +44,7 @@
         <div id="hud">
 
             <div id="healthBox">
+
                 <div class="hudTitle">
                     GEZONDHEID
                 </div>
@@ -54,6 +56,7 @@
                 <div id="healthText">
                     100 / 100
                 </div>
+
             </div>
 
 
@@ -84,6 +87,11 @@
                     <span id="block">0</span>
                 </div>
 
+                <div class="item">
+                    ⚙️
+                    <span id="machine">0</span>
+                </div>
+
             </div>
 
         </div>
@@ -93,7 +101,8 @@
         <div id="info">
             WASD = bewegen<br>
             Klik = verzamelen<br>
-            E = crafting
+            E = bouwmenu<br>
+            B = bouwen
         </div>
 
 
@@ -101,57 +110,62 @@
         <div id="message"></div>
 
 
-        <!-- CRAFTING -->
+        <!-- BOUW / CRAFT MENU -->
         <div id="crafting">
 
-            <h2>CRAFTING</h2>
+            <h2>BOUW & CRAFTING</h2>
 
             <p>
-                Maak nieuwe spullen.
+                Maak spullen en plaats ze in de wereld.
             </p>
 
 
+            <h3>GEREEDSCHAP</h3>
+
             <button class="craftButton" data-craft="axe">
-
                 🪓 BIJL
-
-                <small>
-                    8 hout + 4 steen
-                </small>
-
+                <small>8 hout + 4 steen</small>
             </button>
-
 
             <button class="craftButton" data-craft="pickaxe">
-
                 ⛏️ PIKHOUWEEL
-
-                <small>
-                    10 steen + 5 erts
-                </small>
-
+                <small>10 steen + 5 erts</small>
             </button>
-
 
             <button class="craftButton" data-craft="lantern">
-
                 🏮 LANTAARN
-
-                <small>
-                    5 hout + 2 erts
-                </small>
-
+                <small>5 hout + 2 erts</small>
             </button>
 
 
+            <h3>BOUWEN</h3>
+
             <button class="craftButton" data-craft="block">
-
                 🧱 BOUWBLOK
+                <small>5 hout + 5 steen</small>
+            </button>
 
-                <small>
-                    5 hout + 5 steen
-                </small>
 
+            <h3>MACHINES</h3>
+
+            <button class="craftButton" data-craft="furnace">
+                🔥 OVEN
+                <small>12 steen + 4 erts</small>
+            </button>
+
+            <button class="craftButton" data-craft="workbench">
+                🛠️ WERKBANK
+                <small>10 hout + 6 steen</small>
+            </button>
+
+            <button class="craftButton" data-craft="miner">
+                ⛏️ MIJN MACHINE
+                <small>15 steen + 10 erts + 2 kristal</small>
+            </button>
+
+            <button class="craftButton" data-craft="generator">
+                ⚡ GENERATOR
+                <small>10 erts + 5 kristal</small>
             </button>
 
         </div>
