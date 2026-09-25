@@ -10,17 +10,17 @@
 
 <body>
 
-    <!-- STARTMENU -->
+    <!-- START MENU -->
     <div id="menu">
         <h1>MINVORA</h1>
-        <p>Mine • Verzamel • Craft</p>
+        <p>Mine • Verzamel • Craft • Explore</p>
 
         <button id="startBtn" type="button">
             START GAME
         </button>
 
         <p class="controls">
-            WASD = bewegen | Klik = minen | E = craften
+            WASD = lopen • Muis = kijken • Klik = hakken/minen
         </p>
     </div>
 
@@ -28,112 +28,70 @@
     <!-- GAME -->
     <div id="game" class="hidden">
 
-        <header>
-            <div>
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- CROSSHAIR -->
+        <div id="crosshair">
+            +
+        </div>
+
+        <!-- HUD -->
+        <div id="hud">
+
+            <div class="topLeft">
                 <h2>MINVORA</h2>
-                <span id="status">Klaar om te minen!</span>
+                <span id="status">
+                    Zoek grondstoffen...
+                </span>
             </div>
 
-            <div class="stats">
-                ⛏️ <b id="ore">0</b>
-                🪵 <b id="wood">0</b>
-                💎 <b id="crystal">0</b>
-            </div>
-        </header>
+            <div class="inventory">
 
-
-        <main>
-
-            <canvas
-                id="gameCanvas"
-                width="900"
-                height="560">
-            </canvas>
-
-
-            <aside>
-
-                <h3>INVENTORY</h3>
-
-                <div class="inventory">
-                    <div>
-                        ⛏️ Erts
-                        <b id="invOre">0</b>
-                    </div>
-
-                    <div>
-                        🪵 Hout
-                        <b id="invWood">0</b>
-                    </div>
-
-                    <div>
-                        💎 Kristal
-                        <b id="invCrystal">0</b>
-                    </div>
-
-                    <div>
-                        🧱 Steen
-                        <b id="invStone">0</b>
-                    </div>
+                <div>
+                    🪵
+                    <span id="wood">0</span>
                 </div>
 
+                <div>
+                    🪨
+                    <span id="stone">0</span>
+                </div>
 
-                <h3>CRAFTING</h3>
+                <div>
+                    ⛏️
+                    <span id="ore">0</span>
+                </div>
 
-                <button class="craft" data-item="pickaxe">
-                    ⛏️ IJZEREN PICKAXE
-                    <small>10 erts + 5 hout</small>
-                </button>
+                <div>
+                    💎
+                    <span id="crystal">0</span>
+                </div>
 
-                <button class="craft" data-item="torch">
-                    🔥 FAKKELS x5
-                    <small>3 hout + 1 erts</small>
-                </button>
+            </div>
 
-                <button class="craft" data-item="crystal">
-                    💎 KRISTALBOM
-                    <small>5 kristallen + 5 erts</small>
-                </button>
+        </div>
 
-            </aside>
 
-        </main>
+        <!-- HAND -->
+        <div id="hand">
+            <div id="tool">
+                ⛏️
+            </div>
+        </div>
+
+
+        <!-- HINT -->
+        <div id="hint">
+            Klik om te minen
+        </div>
+
+
+        <!-- MESSAGE -->
+        <div id="message"></div>
 
     </div>
 
 
-    <div id="message"></div>
-
-
-    <!-- JAVASCRIPT -->
-    <script>
-
-        const startButton =
-            document.getElementById("startBtn");
-
-        const menu =
-            document.getElementById("menu");
-
-        const game =
-            document.getElementById("game");
-
-
-        startButton.addEventListener("click", function () {
-
-            console.log("START GAME GEKLIKT");
-
-            menu.style.display = "none";
-
-            game.classList.remove("hidden");
-
-            game.style.display = "block";
-
-        });
-
-    </script>
-
-
-    <!-- DE GAME CODE -->
     <script src="app.js"></script>
 
 </body>
