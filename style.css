@@ -1,876 +1,3213 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+// ==========================================
+// MINVORA
+// ==========================================
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const menu = document.getElementById("menu");
+const startButton = document.getElementById("startButton");
+
+const achievementButton =
+    document.getElementById("achievementButton");
+
+const achievementScreen =
+    document.getElementById("achievementScreen");
+
+const closeAchievements =
+    document.getElementById("closeAchievements");
+
+const achievementList =
+    document.getElementById("achievementList");
+
+const game =
+    document.getElementById("game");
+
+const restartButton =
+    document.getElementById("restartButton");
+
+const gameOverScreen =
+    document.getElementById("gameOver");
+
+const crafting =
+    document.getElementById("crafting");
+
+const craftButtons =
+    document.querySelectorAll(".craftButton");
+
+const woodText =
+    document.getElementById("wood");
+
+const stoneText =
+    document.getElementById("stone");
+
+const oreText =
+    document.getElementById("ore");
+
+const crystalText =
+    document.getElementById("crystal");
+
+const blockText =
+    document.getElementById("block");
+
+const machineText =
+    document.getElementById("machine");
+
+const healthBar =
+    document.getElementById("health");
+
+const healthText =
+    document.getElementById("healthText");
+
+const info =
+    document.getElementById("info");
+
+const message =
+    document.getElementById("message");
+
+
+// ==========================================
+// CANVAS
+// ==========================================
+
+function resizeCanvas() {
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
 
-body {
-    overflow: hidden;
-    background: #05080c;
-    font-family: Arial, Helvetica, sans-serif;
-    color: white;
-}
+resizeCanvas();
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
 
 
-/* =========================
-   START MENU
-========================= */
+// ==========================================
+// SPELER
+// ==========================================
 
-#menu {
-    position: fixed;
-    inset: 0;
+const player = {
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    x: 1500,
+    y: 1500,
 
-    background:
-        radial-gradient(
-            circle at center,
-            #193a2c 0%,
-            #0b1715 45%,
-            #030608 100%
+    size: 18,
+
+    speed: 3,
+
+    health: 100,
+
+    maxHealth: 100
+};
+
+
+// ==========================================
+// INVENTORY
+// ==========================================
+
+const inventory = {
+
+    wood: 0,
+    stone: 0,
+    ore: 0,
+    crystal: 0,
+
+    block: 0,
+    machine: 0,
+
+    axe: false,
+    pickaxe: false,
+    lantern: false,
+
+    furnace: 0,
+    workbench: 0,
+    miner: 0,
+    generator: 0
+};
+
+
+// ==========================================
+// ACHIEVEMENTS
+// ==========================================
+
+const achievements = [
+
+    {
+        id: "firstWood",
+        icon: "🪵",
+        name: "Eerste hout",
+        description: "Verzamel je eerste stuk hout.",
+        unlocked: false
+    },
+
+    {
+        id: "firstStone",
+        icon: "🪨",
+        name: "Steenzoeker",
+        description: "Verzamel je eerste steen.",
+        unlocked: false
+    },
+
+    {
+        id: "firstOre",
+        icon: "⛏️",
+        name: "Mijnwerker",
+        description: "Verzamel je eerste erts.",
+        unlocked: false
+    },
+
+    {
+        id: "firstCrystal",
+        icon: "💎",
+        name: "Kristaljager",
+        description: "Vind je eerste kristal.",
+        unlocked: false
+    },
+
+    {
+        id: "firstCraft",
+        icon: "🔨",
+        name: "Uitvinder",
+        description: "Maak je eerste item.",
+        unlocked: false
+    },
+
+    {
+        id: "firstBlock",
+        icon: "🧱",
+        name: "Bouwer",
+        description: "Plaats je eerste bouwblok.",
+        unlocked: false
+    },
+
+    {
+        id: "firstMachine",
+        icon: "⚙️",
+        name: "Ingenieur",
+        description: "Maak je eerste machine.",
+        unlocked: false
+    },
+
+    {
+        id: "firstEnemy",
+        icon: "👾",
+        name: "Monsterjager",
+        description: "Versla je eerste monster.",
+        unlocked: false
+    },
+
+    {
+        id: "collector",
+        icon: "📦",
+        name: "Verzamelaar",
+        description: "Verzamel 50 grondstoffen.",
+        unlocked: false
+    },
+
+    {
+        id: "builder",
+        icon: "🏗️",
+        name: "Architect",
+        description: "Plaats 10 bouwobjecten.",
+        unlocked: false
+    }
+];
+
+let totalCollected = 0;
+let totalBuilt = 0;
+
+
+// ==========================================
+// ACHIEVEMENT LADEN
+// ==========================================
+
+function loadAchievements() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(
+                "minvoraAchievements"
+            );
+
+        if (!saved)
+            return;
+
+        const savedData =
+            JSON.parse(saved);
+
+        achievements.forEach(
+            function(achievement) {
+
+                if (
+                    savedData[achievement.id]
+                ) {
+
+                    achievement.unlocked =
+                        true;
+                }
+            }
         );
 
-    z-index: 100;
-}
+    } catch (error) {
 
-
-/* Achtergrond */
-
-.menuBackground {
-    position: absolute;
-    inset: 0;
-
-    background:
-        linear-gradient(
-            rgba(0,0,0,0.25),
-            rgba(0,0,0,0.7)
-        ),
-        repeating-linear-gradient(
-            45deg,
-            transparent 0px,
-            transparent 40px,
-            rgba(255,255,255,0.015) 41px,
-            transparent 42px
+        console.log(
+            "Achievements konden niet worden geladen."
         );
-
-    pointer-events: none;
+    }
 }
 
 
-/* Licht achter logo */
+// ==========================================
+// ACHIEVEMENT OPSLAAN
+// ==========================================
 
-.menuBackground::after {
-    content: "";
+function saveAchievements() {
 
-    position: absolute;
+    const data = {};
 
-    width: 650px;
-    height: 650px;
+    achievements.forEach(
+        function(achievement) {
 
-    left: 50%;
-    top: 45%;
-
-    transform: translate(-50%, -50%);
-
-    background: radial-gradient(
-        circle,
-        rgba(62, 220, 140, 0.16),
-        transparent 65%
+            data[achievement.id] =
+                achievement.unlocked;
+        }
     );
 
-    filter: blur(15px);
+    localStorage.setItem(
+        "minvoraAchievements",
+        JSON.stringify(data)
+    );
 }
 
 
-/* Inhoud */
+// ==========================================
+// ACHIEVEMENT VRIJSPELEN
+// ==========================================
 
-.menuContent {
-    position: relative;
+function unlockAchievement(id) {
 
-    width: min(520px, 90vw);
-
-    text-align: center;
-
-    padding: 45px 35px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(20,32,30,0.95),
-            rgba(7,12,14,0.96)
+    const achievement =
+        achievements.find(
+            a => a.id === id
         );
 
-    border: 1px solid rgba(116,255,183,0.25);
+    if (!achievement)
+        return;
 
-    border-radius: 20px;
+    if (achievement.unlocked)
+        return;
 
-    box-shadow:
-        0 30px 100px rgba(0,0,0,0.75),
-        0 0 50px rgba(55,220,140,0.08);
+    achievement.unlocked = true;
 
-    backdrop-filter: blur(12px);
+    saveAchievements();
+
+    showMessage(
+        "🏆 Achievement: " +
+        achievement.name
+    );
+
+    renderAchievements();
 }
 
 
-/* Logo */
+// ==========================================
+// ACHIEVEMENTS TONEN
+// ==========================================
 
-.gameLogo {
-    font-size: clamp(55px, 10vw, 90px);
+function renderAchievements() {
 
-    font-weight: 900;
+    if (!achievementList)
+        return;
 
-    letter-spacing: 8px;
+    achievementList.innerHTML = "";
 
-    color: #dfffea;
+    achievements.forEach(
+        function(achievement) {
 
-    text-shadow:
-        0 0 10px rgba(82,255,164,0.8),
-        0 0 35px rgba(82,255,164,0.35);
+            const div =
+                document.createElement("div");
 
-    margin-bottom: 5px;
+            div.className =
+                "achievement " +
+                (
+                    achievement.unlocked
+                        ? "unlocked"
+                        : "locked"
+                );
+
+            const icon =
+                achievement.unlocked
+                    ? achievement.icon
+                    : "🔒";
+
+            const status =
+                achievement.unlocked
+                    ? "VRIJGESPEELD"
+                    : "VERGRENDELD";
+
+            div.innerHTML = `
+
+                <div class="achievementIcon">
+                    ${icon}
+                </div>
+
+                <div class="achievementInfo">
+
+                    <div class="achievementName">
+                        ${achievement.name}
+                    </div>
+
+                    <div class="achievementDescription">
+                        ${achievement.description}
+                    </div>
+
+                </div>
+
+                <div class="status">
+                    ${status}
+                </div>
+
+            `;
+
+            achievementList.appendChild(div);
+        }
+    );
 }
 
 
-.gameSubtitle {
-    color: #76dca2;
+// ==========================================
+// ACHIEVEMENT MENU
+// ==========================================
 
-    font-size: 13px;
+achievementButton.addEventListener(
+    "click",
+    function() {
 
-    letter-spacing: 5px;
+        renderAchievements();
 
-    margin-bottom: 25px;
-}
-
-
-.menuLine {
-    height: 1px;
-
-    width: 80%;
-
-    margin: 0 auto 30px;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            #57d994,
-            transparent
-        );
-}
-
-
-/* Knoppen */
-
-.menuButton {
-    width: 100%;
-
-    padding: 18px;
-
-    margin-top: 13px;
-
-    border: 1px solid rgba(109,255,171,0.3);
-
-    border-radius: 10px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #246d49,
-            #123c2b
-        );
-
-    color: white;
-
-    font-size: 18px;
-
-    font-weight: bold;
-
-    letter-spacing: 2px;
-
-    cursor: pointer;
-
-    transition:
-        transform 0.15s,
-        box-shadow 0.15s,
-        background 0.15s;
-}
-
-
-.menuButton span {
-    margin-right: 10px;
-}
-
-
-.menuButton:hover {
-    transform: translateY(-3px);
-
-    background:
-        linear-gradient(
-            135deg,
-            #328c5d,
-            #185438
-        );
-
-    box-shadow:
-        0 10px 30px rgba(52,220,133,0.2);
-}
-
-
-.menuButton:active {
-    transform: translateY(0);
-}
-
-
-.menuButton.secondary {
-    background:
-        linear-gradient(
-            135deg,
-            #303b45,
-            #171e24
-        );
-}
-
-
-.menuButton.secondary:hover {
-    background:
-        linear-gradient(
-            135deg,
-            #45535f,
-            #202b33
-        );
-}
-
-
-/* Controls */
-
-.controls {
-    margin-top: 28px;
-
-    color: #81918b;
-
-    font-size: 12px;
-
-    line-height: 2;
-
-    letter-spacing: 2px;
-}
-
-
-.version {
-    margin-top: 20px;
-
-    color: #53635d;
-
-    font-size: 11px;
-}
-
-
-/* =========================
-   ACHIEVEMENTS SCHERM
-========================= */
-
-#achievementScreen {
-    position: fixed;
-
-    inset: 0;
-
-    display: none;
-
-    justify-content: center;
-    align-items: center;
-
-    background:
-        rgba(2,5,7,0.88);
-
-    backdrop-filter: blur(10px);
-
-    z-index: 200;
-}
-
-
-.achievementPanel {
-    position: relative;
-
-    width: min(700px, 92vw);
-    max-height: 85vh;
-
-    overflow-y: auto;
-
-    padding: 35px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #14231f,
-            #080d10
-        );
-
-    border: 1px solid rgba(110,255,170,0.3);
-
-    border-radius: 18px;
-
-    box-shadow:
-        0 30px 100px rgba(0,0,0,0.8);
-}
-
-
-.achievementTitle {
-    text-align: center;
-
-    font-size: 34px;
-
-    font-weight: 900;
-
-    letter-spacing: 3px;
-
-    color: #e7fff1;
-
-    margin-bottom: 8px;
-}
-
-
-.achievementSubtitle {
-    text-align: center;
-
-    color: #7e9b8c;
-
-    margin-bottom: 25px;
-}
-
-
-/* Achievement kaart */
-
-.achievement {
-    display: flex;
-
-    align-items: center;
-
-    gap: 18px;
-
-    padding: 18px;
-
-    margin-bottom: 12px;
-
-    border-radius: 12px;
-
-    border: 1px solid rgba(255,255,255,0.07);
-
-    background:
-        rgba(255,255,255,0.035);
-}
-
-
-.achievementIcon {
-    width: 55px;
-    height: 55px;
-
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
-
-    flex-shrink: 0;
-
-    border-radius: 12px;
-
-    font-size: 28px;
-
-    background: #26332f;
-}
-
-
-.achievementInfo {
-    flex: 1;
-}
-
-
-.achievementName {
-    font-size: 17px;
-
-    font-weight: bold;
-
-    margin-bottom: 5px;
-}
-
-
-.achievementDescription {
-    color: #8da198;
-
-    font-size: 13px;
-}
-
-
-.achievement.locked {
-    opacity: 0.4;
-}
-
-
-.achievement.unlocked {
-    border-color:
-        rgba(90,255,160,0.35);
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(49,150,92,0.16),
-            rgba(255,255,255,0.025)
-        );
-}
-
-
-.achievement.unlocked .achievementIcon {
-    background: #255b3e;
-
-    box-shadow:
-        0 0 20px rgba(73,255,148,0.15);
-}
-
-
-.status {
-    font-size: 11px;
-
-    font-weight: bold;
-
-    letter-spacing: 1px;
-
-    color: #69e59a;
-}
-
-
-.locked .status {
-    color: #68746f;
-}
-
-
-/* Sluitknop */
-
-.closeButton {
-    position: absolute;
-
-    top: 15px;
-    right: 15px;
-
-    width: 40px;
-    height: 40px;
-
-    border: 0;
-
-    border-radius: 50%;
-
-    background: #202b2c;
-
-    color: white;
-
-    font-size: 18px;
-
-    cursor: pointer;
-}
-
-
-.closeButton:hover {
-    background: #384849;
-}
-
-
-/* =========================
-   GAME
-========================= */
-
-#game {
-    position: fixed;
-
-    inset: 0;
-
-    display: none;
-
-    background: #18351f;
-}
-
-
-#gameCanvas {
-    position: absolute;
-
-    inset: 0;
-
-    width: 100%;
-    height: 100%;
-
-    cursor: crosshair;
-}
-
-
-/* =========================
-   HUD
-========================= */
-
-#hud {
-    position: fixed;
-
-    top: 18px;
-    left: 18px;
-    right: 18px;
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: flex-start;
-
-    pointer-events: none;
-
-    z-index: 10;
-}
-
-
-#healthBox {
-    min-width: 210px;
-
-    padding: 12px;
-
-    background:
-        rgba(5,10,10,0.8);
-
-    border:
-        1px solid rgba(255,255,255,0.1);
-
-    border-radius: 10px;
-}
-
-
-.hudTitle {
-    font-size: 11px;
-
-    letter-spacing: 2px;
-
-    color: #a9b7b1;
-
-    margin-bottom: 7px;
-}
-
-
-.healthBar {
-    width: 100%;
-    height: 12px;
-
-    background: #252b2b;
-
-    border-radius: 20px;
-
-    overflow: hidden;
-}
-
-
-#health {
-    width: 100%;
-    height: 100%;
-
-    background:
-        linear-gradient(
-            90deg,
-            #e63d3d,
-            #62e36e
-        );
-
-    transition: width 0.2s;
-}
-
-
-#healthText {
-    margin-top: 5px;
-
-    text-align: right;
-
-    font-size: 12px;
-
-    color: #cbd4d0;
-}
-
-
-#inventory {
-    display: flex;
-
-    gap: 8px;
-
-    flex-wrap: wrap;
-
-    justify-content: flex-end;
-}
-
-
-.item {
-    min-width: 52px;
-
-    padding: 10px;
-
-    text-align: center;
-
-    background:
-        rgba(5,10,10,0.85);
-
-    border:
-        1px solid rgba(255,255,255,0.1);
-
-    border-radius: 9px;
-
-    font-size: 18px;
-}
-
-
-.item span {
-    display: block;
-
-    margin-top: 4px;
-
-    font-size: 12px;
-
-    color: #d8e2dd;
-}
-
-
-/* Info */
-
-#info {
-    position: fixed;
-
-    bottom: 18px;
-    left: 18px;
-
-    padding: 12px 16px;
-
-    background:
-        rgba(5,10,10,0.82);
-
-    border-radius: 9px;
-
-    color: #b7c4be;
-
-    font-size: 12px;
-
-    line-height: 1.7;
-
-    z-index: 10;
-
-    pointer-events: none;
-}
-
-
-/* Message */
-
-#message {
-    position: fixed;
-
-    left: 50%;
-    bottom: 25px;
-
-    transform: translateX(-50%);
-
-    padding: 12px 22px;
-
-    background:
-        rgba(5,10,10,0.9);
-
-    border:
-        1px solid rgba(105,255,165,0.25);
-
-    border-radius: 20px;
-
-    color: white;
-
-    opacity: 0;
-
-    transition: opacity 0.2s;
-
-    z-index: 20;
-
-    pointer-events: none;
-}
-
-
-/* =========================
-   CRAFTING
-========================= */
-
-#crafting {
-    position: fixed;
-
-    top: 50%;
-    left: 50%;
-
-    transform: translate(-50%, -50%);
-
-    width: min(430px, 90vw);
-
-    max-height: 85vh;
-
-    overflow-y: auto;
-
-    padding: 25px;
-
-    background:
-        rgba(8,14,15,0.97);
-
-    border:
-        1px solid rgba(100,255,160,0.25);
-
-    border-radius: 15px;
-
-    box-shadow:
-        0 30px 100px rgba(0,0,0,0.7);
-
-    z-index: 50;
-}
-
-
-#crafting h2 {
-    text-align: center;
-
-    margin-bottom: 8px;
-}
-
-
-#crafting p {
-    text-align: center;
-
-    color: #8b9994;
-
-    margin-bottom: 18px;
-}
-
-
-#crafting h3 {
-    color: #68db95;
-
-    font-size: 12px;
-
-    letter-spacing: 2px;
-
-    margin-top: 15px;
-
-    margin-bottom: 7px;
-}
-
-
-.craftButton {
-    width: 100%;
-
-    padding: 12px;
-
-    margin-bottom: 7px;
-
-    border: 1px solid rgba(255,255,255,0.08);
-
-    border-radius: 8px;
-
-    background: #1a2524;
-
-    color: white;
-
-    text-align: left;
-
-    cursor: pointer;
-}
-
-
-.craftButton:hover {
-    background: #273934;
-}
-
-
-.craftButton small {
-    display: block;
-
-    color: #82928b;
-
-    margin-top: 4px;
-}
-
-
-/* =========================
-   GAME OVER
-========================= */
-
-#gameOver {
-    position: fixed;
-
-    inset: 0;
-
-    display: none;
-
-    justify-content: center;
-    align-items: center;
-
-    flex-direction: column;
-
-    background:
-        rgba(0,0,0,0.8);
-
-    z-index: 100;
-}
-
-
-#gameOver h1 {
-    font-size: 60px;
-
-    margin-bottom: 25px;
-}
-
-
-#restartButton {
-    padding: 15px 40px;
-
-    border: 0;
-
-    border-radius: 8px;
-
-    background: #26784d;
-
-    color: white;
-
-    font-size: 18px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-}
-
-
-#restartButton:hover {
-    background: #349a63;
-}
-
-
-/* =========================
-   MOBIEL
-========================= */
-
-@media (max-width: 600px) {
-
-    .menuContent {
-        padding: 30px 22px;
+        achievementScreen.style.display =
+            "flex";
     }
+);
 
-    .gameLogo {
-        font-size: 48px;
-        letter-spacing: 5px;
+
+closeAchievements.addEventListener(
+    "click",
+    function() {
+
+        achievementScreen.style.display =
+            "none";
     }
+);
 
-    .gameSubtitle {
-        font-size: 9px;
-        letter-spacing: 3px;
-    }
 
-    #hud {
-        flex-direction: column;
-        gap: 8px;
-    }
+// ==========================================
+// WERELD
+// ==========================================
 
-    #inventory {
-        justify-content: flex-start;
-    }
+const world = {
 
-    .achievementPanel {
-        padding: 25px 18px;
+    width: 3000,
+    height: 3000
+};
+
+let objects = [];
+let enemies = [];
+
+let gameRunning = false;
+let gameEnded = false;
+
+let keys = {};
+
+let camera = {
+    x: 0,
+    y: 0
+};
+
+let buildMode = false;
+
+let selectedBuild = null;
+
+let mouseX = 0;
+let mouseY = 0;
+
+let mouseWorldX = 0;
+let mouseWorldY = 0;
+
+let worldTime = 0;
+
+let messageTimer = 0;
+
+
+// ==========================================
+// RANDOM
+// ==========================================
+
+function random(min, max) {
+
+    return Math.random() *
+        (max - min) +
+        min;
+}
+
+
+// ==========================================
+// AFSTAND
+// ==========================================
+
+function distance(
+    x1,
+    y1,
+    x2,
+    y2
+) {
+
+    return Math.hypot(
+        x2 - x1,
+        y2 - y1
+    );
+}
+
+
+// ==========================================
+// MESSAGE
+// ==========================================
+
+function showMessage(text) {
+
+    message.textContent = text;
+
+    message.style.opacity = "1";
+
+    messageTimer = 180;
+}
+
+
+// ==========================================
+// INVENTORY RESET
+// ==========================================
+
+function resetInventory() {
+
+    inventory.wood = 0;
+    inventory.stone = 0;
+    inventory.ore = 0;
+    inventory.crystal = 0;
+
+    inventory.block = 0;
+    inventory.machine = 0;
+
+    inventory.axe = false;
+    inventory.pickaxe = false;
+    inventory.lantern = false;
+
+    inventory.furnace = 0;
+    inventory.workbench = 0;
+    inventory.miner = 0;
+    inventory.generator = 0;
+}
+
+
+// ==========================================
+// UI
+// ==========================================
+
+function updateUI() {
+
+    woodText.textContent =
+        inventory.wood;
+
+    stoneText.textContent =
+        inventory.stone;
+
+    oreText.textContent =
+        inventory.ore;
+
+    crystalText.textContent =
+        inventory.crystal;
+
+    blockText.textContent =
+        inventory.block;
+
+    machineText.textContent =
+        inventory.machine;
+
+    const percentage =
+        Math.max(
+            0,
+            player.health /
+            player.maxHealth *
+            100
+        );
+
+    healthBar.style.width =
+        percentage + "%";
+
+    healthText.textContent =
+        Math.max(
+            0,
+            Math.floor(player.health)
+        ) +
+        " / " +
+        player.maxHealth;
+
+    if (buildMode) {
+
+        info.innerHTML =
+            "BOUWMODUS: " +
+            (
+                selectedBuild
+                    ? selectedBuild.toUpperCase()
+                    : "NIETS"
+            ) +
+            "<br>" +
+            "Klik = plaatsen<br>" +
+            "B = stoppen";
+
+    } else {
+
+        info.innerHTML =
+            "WASD = bewegen<br>" +
+            "Klik = verzamelen<br>" +
+            "E = bouwmenu<br>" +
+            "B = bouwen";
     }
 }
+
+
+// ==========================================
+// WERELD MAKEN
+// ==========================================
+
+function createWorld() {
+
+    objects = [];
+    enemies = [];
+
+    for (
+        let i = 0;
+        i < 130;
+        i++
+    ) {
+
+        const x =
+            random(
+                70,
+                world.width - 70
+            );
+
+        const y =
+            random(
+                70,
+                world.height - 70
+            );
+
+        objects.push({
+
+            type: "tree",
+
+            x: x,
+            y: y,
+
+            size: 35,
+
+            hp: 3,
+
+            alive: true,
+
+            solid: true
+        });
+    }
+
+
+    for (
+        let i = 0;
+        i < 100;
+        i++
+    ) {
+
+        objects.push({
+
+            type: "stone",
+
+            x: random(
+                70,
+                world.width - 70
+            ),
+
+            y: random(
+                70,
+                world.height - 70
+            ),
+
+            size: 28,
+
+            hp: 2,
+
+            alive: true,
+
+            solid: true
+        });
+    }
+
+
+    for (
+        let i = 0;
+        i < 70;
+        i++
+    ) {
+
+        objects.push({
+
+            type: "ore",
+
+            x: random(
+                70,
+                world.width - 70
+            ),
+
+            y: random(
+                70,
+                world.height - 70
+            ),
+
+            size: 25,
+
+            hp: 2,
+
+            alive: true,
+
+            solid: true
+        });
+    }
+
+
+    for (
+        let i = 0;
+        i < 35;
+        i++
+    ) {
+
+        objects.push({
+
+            type: "crystal",
+
+            x: random(
+                70,
+                world.width - 70
+            ),
+
+            y: random(
+                70,
+                world.height - 70
+            ),
+
+            size: 22,
+
+            hp: 1,
+
+            alive: true,
+
+            solid: true
+        });
+    }
+
+
+    for (
+        let i = 0;
+        i < 18;
+        i++
+    ) {
+
+        enemies.push({
+
+            x: random(
+                150,
+                world.width - 150
+            ),
+
+            y: random(
+                150,
+                world.height - 150
+            ),
+
+            size: 22,
+
+            speed: 0.5,
+
+            health: 30,
+
+            attackCooldown: 0
+        });
+    }
+}
+
+
+// ==========================================
+// START
+// ==========================================
+
+function startGame() {
+
+    gameRunning = true;
+
+    gameEnded = false;
+
+    player.x =
+        world.width / 2;
+
+    player.y =
+        world.height / 2;
+
+    player.health = 100;
+
+    resetInventory();
+
+    buildMode = false;
+
+    selectedBuild = null;
+
+    createWorld();
+
+    menu.style.display =
+        "none";
+
+    achievementScreen.style.display =
+        "none";
+
+    game.style.display =
+        "block";
+
+    gameOverScreen.style.display =
+        "none";
+
+    crafting.style.display =
+        "none";
+
+    updateUI();
+
+    showMessage(
+        "Welkom in MINVORA!"
+    );
+
+    requestAnimationFrame(
+        gameLoop
+    );
+}
+
+
+// ==========================================
+// GAME OVER
+// ==========================================
+
+function endGame() {
+
+    gameRunning = false;
+
+    gameEnded = true;
+
+    buildMode = false;
+
+    selectedBuild = null;
+
+    gameOverScreen.style.display =
+        "flex";
+}
+
+
+// ==========================================
+// RESTART
+// ==========================================
+
+function restartGame() {
+
+    gameOverScreen.style.display =
+        "none";
+
+    startGame();
+}
+
+
+// ==========================================
+// TOETSEN
+// ==========================================
+
+window.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+        keys[key] = true;
+
+
+        if (
+            key === "b" &&
+            gameRunning
+        ) {
+
+            buildMode =
+                !buildMode;
+
+            if (!buildMode) {
+
+                selectedBuild =
+                    null;
+            }
+
+            updateUI();
+        }
+
+
+        if (
+            key === "e" &&
+            gameRunning
+        ) {
+
+            if (
+                crafting.style.display ===
+                "none" ||
+                crafting.style.display ===
+                ""
+            ) {
+
+                crafting.style.display =
+                    "block";
+
+            } else {
+
+                crafting.style.display =
+                    "none";
+            }
+        }
+    }
+);
+
+
+window.addEventListener(
+    "keyup",
+    function(event) {
+
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+    }
+);
+
+
+// ==========================================
+// SPELER COLLISION
+// ==========================================
+
+function isBlocked(
+    x,
+    y,
+    radius
+) {
+
+    for (
+        const object of objects
+    ) {
+
+        if (!object.alive)
+            continue;
+
+        if (!object.solid)
+            continue;
+
+        const objectRadius =
+            object.type === "block"
+                ? 20
+                : object.type === "machine"
+                    ? 24
+                    : object.size / 2;
+
+        if (
+            distance(
+                x,
+                y,
+                object.x,
+                object.y
+            ) <
+            radius + objectRadius
+        ) {
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// ==========================================
+// SPELER BEWEGEN
+// ==========================================
+
+function movePlayer() {
+
+    let dx = 0;
+    let dy = 0;
+
+    if (keys["w"])
+        dy--;
+
+    if (keys["s"])
+        dy++;
+
+    if (keys["a"])
+        dx--;
+
+    if (keys["d"])
+        dx++;
+
+
+    if (
+        dx !== 0 ||
+        dy !== 0
+    ) {
+
+        const length =
+            Math.hypot(
+                dx,
+                dy
+            );
+
+        dx /= length;
+        dy /= length;
+
+
+        const nextX =
+            player.x +
+            dx * player.speed;
+
+        const nextY =
+            player.y +
+            dy * player.speed;
+
+
+        if (
+            !isBlocked(
+                nextX,
+                player.y,
+                player.size
+            )
+        ) {
+
+            player.x =
+                nextX;
+        }
+
+
+        if (
+            !isBlocked(
+                player.x,
+                nextY,
+                player.size
+            )
+        ) {
+
+            player.y =
+                nextY;
+        }
+    }
+
+
+    player.x =
+        Math.max(
+            player.size,
+            Math.min(
+                world.width -
+                player.size,
+                player.x
+            )
+        );
+
+
+    player.y =
+        Math.max(
+            player.size,
+            Math.min(
+                world.height -
+                player.size,
+                player.y
+            )
+        );
+}
+
+
+// ==========================================
+// CAMERA
+// ==========================================
+
+function updateCamera() {
+
+    camera.x =
+        player.x -
+        canvas.width / 2;
+
+    camera.y =
+        player.y -
+        canvas.height / 2;
+
+    camera.x =
+        Math.max(
+            0,
+            Math.min(
+                world.width -
+                canvas.width,
+                camera.x
+            )
+        );
+
+    camera.y =
+        Math.max(
+            0,
+            Math.min(
+                world.height -
+                canvas.height,
+                camera.y
+            )
+        );
+}
+
+
+// ==========================================
+// MUIS
+// ==========================================
+
+canvas.addEventListener(
+    "mousemove",
+    function(event) {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        mouseX =
+            event.clientX -
+            rect.left;
+
+        mouseY =
+            event.clientY -
+            rect.top;
+
+        mouseWorldX =
+            mouseX +
+            camera.x;
+
+        mouseWorldY =
+            mouseY +
+            camera.y;
+    }
+);
+
+
+// ==========================================
+// KLIKKEN
+// ==========================================
+
+canvas.addEventListener(
+    "click",
+    function() {
+
+        if (!gameRunning)
+            return;
+
+        if (buildMode) {
+
+            placeSelectedObject(
+                mouseWorldX,
+                mouseWorldY
+            );
+
+        } else {
+
+            collectObject(
+                mouseWorldX,
+                mouseWorldY
+            );
+        }
+    }
+);
+
+
+// ==========================================
+// BOUWEN
+// ==========================================
+
+function placeSelectedObject(
+    x,
+    y
+) {
+
+    if (!selectedBuild)
+        return;
+
+    const d =
+        distance(
+            player.x,
+            player.y,
+            x,
+            y
+        );
+
+    if (d > 220) {
+
+        showMessage(
+            "Te ver weg!"
+        );
+
+        return;
+    }
+
+
+    const grid = 40;
+
+    const blockX =
+        Math.round(
+            x / grid
+        ) * grid;
+
+    const blockY =
+        Math.round(
+            y / grid
+        ) * grid;
+
+
+    if (
+        isBlocked(
+            blockX,
+            blockY,
+            20
+        )
+    ) {
+
+        showMessage(
+            "Hier staat al iets!"
+        );
+
+        return;
+    }
+
+
+    if (
+        selectedBuild === "block"
+    ) {
+
+        if (
+            inventory.block <= 0
+        ) {
+
+            showMessage(
+                "Geen bouwblokken!"
+            );
+
+            return;
+        }
+
+
+        objects.push({
+
+            type: "block",
+
+            x: blockX,
+            y: blockY,
+
+            size: 40,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true
+        });
+
+
+        inventory.block--;
+
+        totalBuilt++;
+
+        unlockAchievement(
+            "firstBlock"
+        );
+
+        if (
+            totalBuilt >= 10
+        ) {
+
+            unlockAchievement(
+                "builder"
+            );
+        }
+
+
+        showMessage(
+            "🧱 Bouwblok geplaatst!"
+        );
+    }
+
+
+    if (
+        selectedBuild === "furnace"
+    ) {
+
+        if (
+            inventory.furnace <= 0
+        ) {
+
+            showMessage(
+                "Geen oven!"
+            );
+
+            return;
+        }
+
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "furnace",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true
+        });
+
+
+        inventory.furnace--;
+
+        inventory.machine--;
+
+        totalBuilt++;
+
+        unlockAchievement(
+            "firstMachine"
+        );
+
+
+        showMessage(
+            "🔥 Oven geplaatst!"
+        );
+    }
+
+
+    if (
+        selectedBuild === "workbench"
+    ) {
+
+        if (
+            inventory.workbench <= 0
+        ) {
+
+            showMessage(
+                "Geen werkbank!"
+            );
+
+            return;
+        }
+
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "workbench",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true
+        });
+
+
+        inventory.workbench--;
+
+        inventory.machine--;
+
+        totalBuilt++;
+
+        unlockAchievement(
+            "firstMachine"
+        );
+
+
+        showMessage(
+            "🛠️ Werkbank geplaatst!"
+        );
+    }
+
+
+    if (
+        selectedBuild === "miner"
+    ) {
+
+        if (
+            inventory.miner <= 0
+        ) {
+
+            showMessage(
+                "Geen mijnmachine!"
+            );
+
+            return;
+        }
+
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "miner",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true,
+
+            timer: 0
+        });
+
+
+        inventory.miner--;
+
+        inventory.machine--;
+
+        totalBuilt++;
+
+        unlockAchievement(
+            "firstMachine"
+        );
+
+
+        showMessage(
+            "⛏️ Mijnmachine geplaatst!"
+        );
+    }
+
+
+    if (
+        selectedBuild === "generator"
+    ) {
+
+        if (
+            inventory.generator <= 0
+        ) {
+
+            showMessage(
+                "Geen generator!"
+            );
+
+            return;
+        }
+
+
+        objects.push({
+
+            type: "machine",
+
+            machineType: "generator",
+
+            x: blockX,
+            y: blockY,
+
+            size: 44,
+
+            hp: 999,
+
+            alive: true,
+
+            solid: true,
+
+            timer: 0
+        });
+
+
+        inventory.generator--;
+
+        inventory.machine--;
+
+        totalBuilt++;
+
+        unlockAchievement(
+            "firstMachine"
+        );
+
+
+        showMessage(
+            "⚡ Generator geplaatst!"
+        );
+    }
+
+
+    updateUI();
+}
+
+
+// ==========================================
+// VERZAMELEN
+// ==========================================
+
+function collectObject(
+    x,
+    y
+) {
+
+    let selected = null;
+
+    let selectedDistance =
+        Infinity;
+
+
+    for (
+        const object of objects
+    ) {
+
+        if (!object.alive)
+            continue;
+
+        if (
+            object.type === "block" ||
+            object.type === "machine"
+        )
+            continue;
+
+
+        if (
+            distance(
+                player.x,
+                player.y,
+                object.x,
+                object.y
+            ) > 130
+        )
+            continue;
+
+
+        const clickDistance =
+            distance(
+                x,
+                y,
+                object.x,
+                object.y
+            );
+
+
+        if (
+            clickDistance <
+            selectedDistance
+        ) {
+
+            selected =
+                object;
+
+            selectedDistance =
+                clickDistance;
+        }
+    }
+
+
+    // Monster aanvallen
+
+    for (
+        const enemy of enemies
+    ) {
+
+        if (
+            distance(
+                player.x,
+                player.y,
+                enemy.x,
+                enemy.y
+            ) > 130
+        )
+            continue;
+
+
+        const clickDistance =
+            distance(
+                x,
+                y,
+                enemy.x,
+                enemy.y
+            );
+
+
+        if (
+            clickDistance <
+            selectedDistance
+        ) {
+
+            enemy.health -= 10;
+
+
+            if (
+                enemy.health <= 0
+            ) {
+
+                enemies.splice(
+                    enemies.indexOf(enemy),
+                    1
+                );
+
+                unlockAchievement(
+                    "firstEnemy"
+                );
+
+                showMessage(
+                    "👾 Monster verslagen!"
+                );
+
+            } else {
+
+                showMessage(
+                    "Monster geraakt!"
+                );
+            }
+
+            return;
+        }
+    }
+
+
+    if (!selected)
+        return;
+
+
+    if (
+        selected.type === "tree"
+    ) {
+
+        selected.hp--;
+
+        const amount =
+            inventory.axe
+                ? 5
+                : 3;
+
+        inventory.wood +=
+            amount;
+
+        totalCollected +=
+            amount;
+
+        unlockAchievement(
+            "firstWood"
+        );
+    }
+
+
+    if (
+        selected.type === "stone"
+    ) {
+
+        selected.hp--;
+
+        const amount =
+            inventory.pickaxe
+                ? 4
+                : 2;
+
+        inventory.stone +=
+            amount;
+
+        totalCollected +=
+            amount;
+
+        unlockAchievement(
+            "firstStone"
+        );
+    }
+
+
+    if (
+        selected.type === "ore"
+    ) {
+
+        selected.hp--;
+
+        const amount =
+            inventory.pickaxe
+                ? 4
+                : 2;
+
+        inventory.ore +=
+            amount;
+
+        totalCollected +=
+            amount;
+
+        unlockAchievement(
+            "firstOre"
+        );
+    }
+
+
+    if (
+        selected.type === "crystal"
+    ) {
+
+        selected.hp--;
+
+        inventory.crystal++;
+
+        totalCollected++;
+
+        unlockAchievement(
+            "firstCrystal"
+        );
+    }
+
+
+    if (
+        selected.hp <= 0
+    ) {
+
+        selected.alive =
+            false;
+    }
+
+
+    if (
+        totalCollected >= 50
+    ) {
+
+        unlockAchievement(
+            "collector"
+        );
+    }
+
+
+    updateUI();
+}
+
+
+// ==========================================
+// RECHTSKLIK = OPHALEN
+// ==========================================
+
+canvas.addEventListener(
+    "contextmenu",
+    function(event) {
+
+        event.preventDefault();
+
+        if (
+            !gameRunning ||
+            !buildMode
+        )
+            return;
+
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+
+        const x =
+            event.clientX -
+            rect.left +
+            camera.x;
+
+
+        const y =
+            event.clientY -
+            rect.top +
+            camera.y;
+
+
+        for (
+            const object of objects
+        ) {
+
+            if (!object.alive)
+                continue;
+
+
+            if (
+                object.type !== "block" &&
+                object.type !== "machine"
+            )
+                continue;
+
+
+            if (
+                distance(
+                    x,
+                    y,
+                    object.x,
+                    object.y
+                ) > 35
+            )
+                continue;
+
+
+            object.alive =
+                false;
+
+
+            if (
+                object.type === "block"
+            ) {
+
+                inventory.block++;
+
+            } else {
+
+                inventory[
+                    object.machineType
+                ]++;
+
+                inventory.machine++;
+            }
+
+
+            showMessage(
+                "Object teruggepakt!"
+            );
+
+            updateUI();
+
+            return;
+        }
+    }
+);
+
+
+// ==========================================
+// VIJAND COLLISION
+// ==========================================
+
+function enemyBlocked(
+    enemy,
+    nextX,
+    nextY
+) {
+
+    for (
+        const object of objects
+    ) {
+
+        if (!object.alive)
+            continue;
+
+        if (!object.solid)
+            continue;
+
+
+        const radius =
+            object.type === "block"
+                ? 23
+                : object.type === "machine"
+                    ? 25
+                    : object.size / 2;
+
+
+        if (
+            distance(
+                nextX,
+                nextY,
+                object.x,
+                object.y
+            ) <
+            enemy.size +
+            radius
+        ) {
+
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+
+// ==========================================
+// VIJANDEN
+// ==========================================
+
+function updateEnemies() {
+
+    for (
+        const enemy of enemies
+    ) {
+
+        const dx =
+            player.x -
+            enemy.x;
+
+        const dy =
+            player.y -
+            enemy.y;
+
+        const d =
+            Math.hypot(
+                dx,
+                dy
+            );
+
+
+        if (
+            d < 600 &&
+            d > 35
+        ) {
+
+            const dirX =
+                dx / d;
+
+            const dirY =
+                dy / d;
+
+
+            const nextX =
+                enemy.x +
+                dirX *
+                enemy.speed;
+
+
+            const nextY =
+                enemy.y +
+                dirY *
+                enemy.speed;
+
+
+            if (
+                !enemyBlocked(
+                    enemy,
+                    nextX,
+                    nextY
+                )
+            ) {
+
+                enemy.x =
+                    nextX;
+
+                enemy.y =
+                    nextY;
+
+            } else {
+
+                const sideX =
+                    -dirY;
+
+                const sideY =
+                    dirX;
+
+
+                const optionX =
+                    enemy.x +
+                    sideX *
+                    enemy.speed *
+                    2;
+
+
+                const optionY =
+                    enemy.y +
+                    sideY *
+                    enemy.speed *
+                    2;
+
+
+                if (
+                    !enemyBlocked(
+                        enemy,
+                        optionX,
+                        optionY
+                    )
+                ) {
+
+                    enemy.x =
+                        optionX;
+
+                    enemy.y =
+                        optionY;
+                }
+            }
+        }
+
+
+        const playerDistance =
+            distance(
+                enemy.x,
+                enemy.y,
+                player.x,
+                player.y
+            );
+
+
+        if (
+            playerDistance < 35 &&
+            enemy.attackCooldown <= 0
+        ) {
+
+            player.health -= 5;
+
+            enemy.attackCooldown =
+                60;
+
+            updateUI();
+
+
+            if (
+                player.health <= 0
+            ) {
+
+                player.health = 0;
+
+                updateUI();
+
+                endGame();
+            }
+        }
+
+
+        if (
+            enemy.attackCooldown > 0
+        ) {
+
+            enemy.attackCooldown--;
+        }
+    }
+}
+
+
+// ==========================================
+// MACHINES
+// ==========================================
+
+function updateMachines() {
+
+    for (
+        const object of objects
+    ) {
+
+        if (
+            !object.alive ||
+            object.type !== "machine"
+        )
+            continue;
+
+
+        if (
+            object.machineType === "miner"
+        ) {
+
+            object.timer++;
+
+            if (
+                object.timer >= 600
+            ) {
+
+                object.timer = 0;
+
+                inventory.ore++;
+
+                updateUI();
+            }
+        }
+
+
+        if (
+            object.machineType === "generator"
+        ) {
+
+            object.timer++;
+
+            if (
+                object.timer >= 900
+            ) {
+
+                object.timer = 0;
+
+                inventory.crystal++;
+
+                updateUI();
+            }
+        }
+    }
+}
+
+
+// ==========================================
+// TEKENEN
+// ==========================================
+
+function drawGround() {
+
+    ctx.fillStyle =
+        "#18351f";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    const gridSize = 50;
+
+
+    const startX =
+        -camera.x %
+        gridSize;
+
+
+    const startY =
+        -camera.y %
+        gridSize;
+
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.025)";
+
+
+    for (
+        let x = startX;
+        x < canvas.width;
+        x += gridSize
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            0
+        );
+
+        ctx.lineTo(
+            x,
+            canvas.height
+        );
+
+        ctx.stroke();
+    }
+
+
+    for (
+        let y = startY;
+        y < canvas.height;
+        y += gridSize
+    ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            canvas.width,
+            y
+        );
+
+        ctx.stroke();
+    }
+}
+
+
+// ==========================================
+// OBJECTEN
+// ==========================================
+
+function drawObject(object) {
+
+    if (!object.alive)
+        return;
+
+
+    const x =
+        object.x -
+        camera.x;
+
+
+    const y =
+        object.y -
+        camera.y;
+
+
+    if (
+        object.type === "tree"
+    ) {
+
+        ctx.fillStyle =
+            "#70452a";
+
+        ctx.fillRect(
+            x - 7,
+            y - 3,
+            14,
+            30
+        );
+
+
+        ctx.fillStyle =
+            "#26733a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y - 12,
+            25,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    if (
+        object.type === "stone"
+    ) {
+
+        ctx.fillStyle =
+            "#777";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            18,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    if (
+        object.type === "ore"
+    ) {
+
+        ctx.fillStyle =
+            "#444";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            18,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "#d58b35";
+
+        ctx.fillRect(
+            x - 8,
+            y - 4,
+            7,
+            7
+        );
+
+        ctx.fillRect(
+            x + 4,
+            y + 4,
+            6,
+            6
+        );
+    }
+
+
+    if (
+        object.type === "crystal"
+    ) {
+
+        ctx.fillStyle =
+            "#7ee7ff";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            y - 22
+        );
+
+        ctx.lineTo(
+            x + 12,
+            y
+        );
+
+        ctx.lineTo(
+            x,
+            y + 22
+        );
+
+        ctx.lineTo(
+            x - 12,
+            y
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+    }
+
+
+    if (
+        object.type === "block"
+    ) {
+
+        ctx.fillStyle =
+            "#8a6544";
+
+        ctx.fillRect(
+            x - 20,
+            y - 20,
+            40,
+            40
+        );
+
+
+        ctx.strokeStyle =
+            "#4e3826";
+
+        ctx.lineWidth = 3;
+
+        ctx.strokeRect(
+            x - 20,
+            y - 20,
+            40,
+            40
+        );
+    }
+
+
+    if (
+        object.type === "machine"
+    ) {
+
+        drawMachine(
+            object,
+            x,
+            y
+        );
+    }
+}
+
+
+// ==========================================
+// MACHINES TEKENEN
+// ==========================================
+
+function drawMachine(
+    object,
+    x,
+    y
+) {
+
+    ctx.fillStyle =
+        "#39434d";
+
+    ctx.fillRect(
+        x - 22,
+        y - 22,
+        44,
+        44
+    );
+
+
+    ctx.strokeStyle =
+        "#15191c";
+
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        x - 22,
+        y - 22,
+        44,
+        44
+    );
+
+
+    if (
+        object.machineType ===
+        "furnace"
+    ) {
+
+        ctx.fillStyle =
+            "#ff7b22";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            10,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    if (
+        object.machineType ===
+        "workbench"
+    ) {
+
+        ctx.fillStyle =
+            "#a66a38";
+
+        ctx.fillRect(
+            x - 18,
+            y - 10,
+            36,
+            10
+        );
+
+        ctx.fillRect(
+            x - 14,
+            y,
+            6,
+            17
+        );
+
+        ctx.fillRect(
+            x + 8,
+            y,
+            6,
+            17
+        );
+    }
+
+
+    if (
+        object.machineType ===
+        "miner"
+    ) {
+
+        ctx.fillStyle =
+            "#aaa";
+
+        ctx.fillRect(
+            x - 5,
+            y - 18,
+            10,
+            30
+        );
+
+        ctx.strokeStyle =
+            "#e2b84b";
+
+        ctx.lineWidth = 4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            y - 10
+        );
+
+        ctx.lineTo(
+            x + 18,
+            y - 20
+        );
+
+        ctx.stroke();
+    }
+
+
+    if (
+        object.machineType ===
+        "generator"
+    ) {
+
+        ctx.fillStyle =
+            "#7ee7ff";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x + 4,
+            y - 18
+        );
+
+        ctx.lineTo(
+            x - 8,
+            y + 2
+        );
+
+        ctx.lineTo(
+            x + 2,
+            y + 2
+        );
+
+        ctx.lineTo(
+            x - 5,
+            y + 18
+        );
+
+        ctx.lineTo(
+            x + 12,
+            y - 5
+        );
+
+        ctx.lineTo(
+            x + 3,
+            y - 5
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+    }
+}
+
+
+// ==========================================
+// VIJAND
+// ==========================================
+
+function drawEnemy(enemy) {
+
+    const x =
+        enemy.x -
+        camera.x;
+
+    const y =
+        enemy.y -
+        camera.y;
+
+
+    ctx.fillStyle =
+        "#8c3f8f";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        enemy.size,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x - 7,
+        y - 4,
+        4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.arc(
+        x + 7,
+        y - 4,
+        4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+        "#111";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x - 7,
+        y - 4,
+        2,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.arc(
+        x + 7,
+        y - 4,
+        2,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+}
+
+
+// ==========================================
+// SPELER
+// ==========================================
+
+function drawPlayer() {
+
+    const x =
+        player.x -
+        camera.x;
+
+    const y =
+        player.y -
+        camera.y;
+
+
+    ctx.fillStyle =
+        "#3d8cff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        player.size,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+        "#ffd0a6";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y - 5,
+        9,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+}
+
+
+// ==========================================
+// BOUW PREVIEW
+// ==========================================
+
+function drawBuildPreview() {
+
+    if (
+        !buildMode ||
+        !selectedBuild
+    )
+        return;
+
+
+    const grid = 40;
+
+
+    const x =
+        Math.round(
+            mouseWorldX /
+            grid
+        ) * grid;
+
+
+    const y =
+        Math.round(
+            mouseWorldY /
+            grid
+        ) * grid;
+
+
+    const screenX =
+        x - camera.x;
+
+    const screenY =
+        y - camera.y;
+
+
+    let valid = true;
+
+
+    if (
+        distance(
+            player.x,
+            player.y,
+            x,
+            y
+        ) > 220
+    ) {
+
+        valid = false;
+    }
+
+
+    if (
+        isBlocked(
+            x,
+            y,
+            20
+        )
+    ) {
+
+        valid = false;
+    }
+
+
+    ctx.globalAlpha =
+        0.5;
+
+
+    ctx.fillStyle =
+        valid
+            ? "#64d995"
+            : "#e84d4d";
+
+
+    ctx.fillRect(
+        screenX - 22,
+        screenY - 22,
+        44,
+        44
+    );
+
+
+    ctx.globalAlpha =
+        1;
+}
+
+
+// ==========================================
+// DAG/NACHT
+// ==========================================
+
+function drawDayNight() {
+
+    const darkness =
+        (Math.sin(worldTime) + 1) /
+        2;
+
+    ctx.fillStyle =
+        "rgba(5,10,35," +
+        darkness * 0.3 +
+        ")";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+}
+
+
+// ==========================================
+// TEKENEN
+// ==========================================
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    drawGround();
+
+
+    for (
+        const object of objects
+    ) {
+
+        drawObject(object);
+    }
+
+
+    for (
+        const enemy of enemies
+    ) {
+
+        drawEnemy(enemy);
+    }
+
+
+    drawPlayer();
+
+    drawBuildPreview();
+
+    drawDayNight();
+}
+
+
+// ==========================================
+// GAME LOOP
+// ==========================================
+
+function gameLoop() {
+
+    if (!gameRunning)
+        return;
+
+    if (gameEnded)
+        return;
+
+
+    movePlayer();
+
+    updateEnemies();
+
+    updateMachines();
+
+    updateCamera();
+
+
+    worldTime += 0.0015;
+
+
+    if (
+        worldTime >
+        Math.PI * 2
+    ) {
+
+        worldTime = 0;
+    }
+
+
+    if (
+        messageTimer > 0
+    ) {
+
+        messageTimer--;
+
+        if (
+            messageTimer <= 0
+        ) {
+
+            message.style.opacity =
+                "0";
+        }
+    }
+
+
+    draw();
+
+
+    requestAnimationFrame(
+        gameLoop
+    );
+}
+
+
+// ==========================================
+// CRAFTING
+// ==========================================
+
+craftButtons.forEach(
+    function(button) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                const item =
+                    button.dataset.craft;
+
+
+                // BIJL
+
+                if (
+                    item === "axe"
+                ) {
+
+                    if (
+                        inventory.wood >= 8 &&
+                        inventory.stone >= 4
+                    ) {
+
+                        inventory.wood -= 8;
+                        inventory.stone -= 4;
+
+                        inventory.axe =
+                            true;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        showMessage(
+                            "🪓 Bijl gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "8 hout + 4 steen nodig."
+                        );
+                    }
+                }
+
+
+                // PIKHOUWEEL
+
+                if (
+                    item === "pickaxe"
+                ) {
+
+                    if (
+                        inventory.stone >= 10 &&
+                        inventory.ore >= 5
+                    ) {
+
+                        inventory.stone -= 10;
+                        inventory.ore -= 5;
+
+                        inventory.pickaxe =
+                            true;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        showMessage(
+                            "⛏️ Pikhouweel gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "10 steen + 5 erts nodig."
+                        );
+                    }
+                }
+
+
+                // LANTAARN
+
+                if (
+                    item === "lantern"
+                ) {
+
+                    if (
+                        inventory.wood >= 5 &&
+                        inventory.ore >= 2
+                    ) {
+
+                        inventory.wood -= 5;
+                        inventory.ore -= 2;
+
+                        inventory.lantern =
+                            true;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        showMessage(
+                            "🏮 Lantaarn gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "5 hout + 2 erts nodig."
+                        );
+                    }
+                }
+
+
+                // BLOK
+
+                if (
+                    item === "block"
+                ) {
+
+                    if (
+                        inventory.wood >= 5 &&
+                        inventory.stone >= 5
+                    ) {
+
+                        inventory.wood -= 5;
+                        inventory.stone -= 5;
+
+                        inventory.block++;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        selectedBuild =
+                            "block";
+
+                        buildMode =
+                            true;
+
+                        showMessage(
+                            "🧱 Bouwblok gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "5 hout + 5 steen nodig."
+                        );
+                    }
+                }
+
+
+                // OVEN
+
+                if (
+                    item === "furnace"
+                ) {
+
+                    if (
+                        inventory.stone >= 12 &&
+                        inventory.ore >= 4
+                    ) {
+
+                        inventory.stone -= 12;
+                        inventory.ore -= 4;
+
+                        inventory.furnace++;
+                        inventory.machine++;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        unlockAchievement(
+                            "firstMachine"
+                        );
+
+                        selectedBuild =
+                            "furnace";
+
+                        buildMode =
+                            true;
+
+                        showMessage(
+                            "🔥 Oven gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "12 steen + 4 erts nodig."
+                        );
+                    }
+                }
+
+
+                // WERKBANK
+
+                if (
+                    item === "workbench"
+                ) {
+
+                    if (
+                        inventory.wood >= 10 &&
+                        inventory.stone >= 6
+                    ) {
+
+                        inventory.wood -= 10;
+                        inventory.stone -= 6;
+
+                        inventory.workbench++;
+                        inventory.machine++;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        unlockAchievement(
+                            "firstMachine"
+                        );
+
+                        selectedBuild =
+                            "workbench";
+
+                        buildMode =
+                            true;
+
+                        showMessage(
+                            "🛠️ Werkbank gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "10 hout + 6 steen nodig."
+                        );
+                    }
+                }
+
+
+                // MIJN MACHINE
+
+                if (
+                    item === "miner"
+                ) {
+
+                    if (
+                        inventory.stone >= 15 &&
+                        inventory.ore >= 10 &&
+                        inventory.crystal >= 2
+                    ) {
+
+                        inventory.stone -= 15;
+                        inventory.ore -= 10;
+                        inventory.crystal -= 2;
+
+                        inventory.miner++;
+                        inventory.machine++;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        unlockAchievement(
+                            "firstMachine"
+                        );
+
+                        selectedBuild =
+                            "miner";
+
+                        buildMode =
+                            true;
+
+                        showMessage(
+                            "⛏️ Mijnmachine gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "15 steen + 10 erts + 2 kristal nodig."
+                        );
+                    }
+                }
+
+
+                // GENERATOR
+
+                if (
+                    item === "generator"
+                ) {
+
+                    if (
+                        inventory.ore >= 10 &&
+                        inventory.crystal >= 5
+                    ) {
+
+                        inventory.ore -= 10;
+                        inventory.crystal -= 5;
+
+                        inventory.generator++;
+                        inventory.machine++;
+
+                        unlockAchievement(
+                            "firstCraft"
+                        );
+
+                        unlockAchievement(
+                            "firstMachine"
+                        );
+
+                        selectedBuild =
+                            "generator";
+
+                        buildMode =
+                            true;
+
+                        showMessage(
+                            "⚡ Generator gemaakt!"
+                        );
+
+                    } else {
+
+                        showMessage(
+                            "10 erts + 5 kristal nodig."
+                        );
+                    }
+                }
+
+
+                updateUI();
+            }
+        );
+    }
+);
+
+
+// ==========================================
+// START / RESTART
+// ==========================================
+
+startButton.addEventListener(
+    "click",
+    startGame
+);
+
+
+restartButton.addEventListener(
+    "click",
+    restartGame
+);
+
+
+// ==========================================
+// BEGIN
+// ==========================================
+
+loadAchievements();
+
+renderAchievements();
+
+game.style.display =
+    "none";
+
+menu.style.display =
+    "flex";
+
+gameOverScreen.style.display =
+    "none";
+
+crafting.style.display =
+    "none";
+
+updateUI();
+
+console.log(
+    "MINVORA geladen!"
+);
