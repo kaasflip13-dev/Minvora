@@ -11,44 +11,169 @@
 
 <body>
 
-    <!-- =========================
-         START MENU
-    ========================== -->
+<!-- ================= MENU ================= -->
 
-    <div id="menu">
+<div id="menu">
 
-        <div class="menuBackground"></div>
+    <div class="menuGlow"></div>
 
-        <div class="menuContent">
+    <div class="menuContent">
 
-            <div class="gameLogo">
-                MINVORA
+        <div class="gameLogo">MINVORA</div>
+
+        <div class="gameSubtitle">
+            FRONTIER SURVIVAL SYSTEM
+        </div>
+
+        <div class="menuLine"></div>
+
+        <button id="startButton" class="menuButton">
+            ▶ NIEUWE GAME
+        </button>
+
+        <button id="loadButton" class="menuButton">
+            📂 SAVE LADEN
+        </button>
+
+        <button id="achievementButton" class="menuButton secondary">
+            🏆 ACHIEVEMENTS
+        </button>
+
+        <div class="controls">
+            <b>BESTURING</b>
+            <br>
+            WASD = bewegen
+            <br>
+            SHIFT = sprinten
+            <br>
+            MUIS = verzamelen / aanvallen
+            <br>
+            E = crafting
+            <br>
+            B = bouwmodus
+            <br>
+            ESC = menu
+        </div>
+
+        <div class="version">
+            MINVORA // SURVIVAL BUILD 1.0
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= SAVE MENU ================= -->
+
+<div id="saveScreen" class="screen">
+
+    <div class="savePanel">
+
+        <button id="closeSave" class="closeButton">×</button>
+
+        <h1>SAVE SLOTS</h1>
+
+        <p class="panelSubtitle">
+            Kies een slot
+        </p>
+
+        <div id="saveSlots"></div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= ACHIEVEMENTS ================= -->
+
+<div id="achievementScreen" class="screen">
+
+    <div class="achievementPanel">
+
+        <button id="closeAchievements" class="closeButton">
+            ×
+        </button>
+
+        <h1 class="achievementTitle">
+            ACHIEVEMENTS
+        </h1>
+
+        <p class="achievementSubtitle">
+            Ontdek de frontier
+        </p>
+
+        <div id="achievementList"></div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= GAME ================= -->
+
+<div id="game">
+
+    <canvas id="gameCanvas"></canvas>
+
+
+    <!-- HUD -->
+
+    <div id="hud">
+
+        <div id="healthBox">
+
+            <div class="hudTitle">
+                VITALS
             </div>
 
-            <div class="gameSubtitle">
-                SURVIVAL • MINING • CRAFTING
+            <div class="healthBar">
+                <div id="health"></div>
             </div>
 
-            <div class="menuLine"></div>
-
-            <button id="startButton" class="menuButton">
-                <span>▶</span>
-                START GAME
-            </button>
-
-            <button id="achievementButton" class="menuButton secondary">
-                <span>🏆</span>
-                ACHIEVEMENTS
-            </button>
-
-            <div class="controls">
-                WASD &nbsp; • &nbsp; BEWEGEN<br>
-                E &nbsp; • &nbsp; CRAFTING<br>
-                B &nbsp; • &nbsp; BOUWEN
+            <div id="healthText">
+                100 / 100
             </div>
 
-            <div class="version">
-                MINVORA v1.0
+        </div>
+
+
+        <div id="inventory">
+
+            <div class="item">
+                <span class="itemIcon">◆</span>
+                HOUT
+                <strong id="wood">0</strong>
+            </div>
+
+            <div class="item">
+                <span class="itemIcon">●</span>
+                STEEN
+                <strong id="stone">0</strong>
+            </div>
+
+            <div class="item">
+                <span class="itemIcon">◇</span>
+                ERTS
+                <strong id="ore">0</strong>
+            </div>
+
+            <div class="item">
+                <span class="itemIcon">✦</span>
+                KRISTAL
+                <strong id="crystal">0</strong>
+            </div>
+
+            <div class="item">
+                <span class="itemIcon">■</span>
+                BLOK
+                <strong id="block">0</strong>
+            </div>
+
+            <div class="item">
+                <span class="itemIcon">⚙</span>
+                MACHINE
+                <strong id="machine">0</strong>
             </div>
 
         </div>
@@ -56,193 +181,176 @@
     </div>
 
 
-    <!-- =========================
-         ACHIEVEMENTS
-    ========================== -->
+    <!-- INFO -->
 
-    <div id="achievementScreen">
+    <div id="info">
+        WASD bewegen<br>
+        SHIFT sprinten<br>
+        Klik verzamelen / aanvallen<br>
+        E crafting<br>
+        B bouwen
+    </div>
 
-        <div class="achievementPanel">
 
-            <button id="closeAchievements" class="closeButton">
-                ✕
-            </button>
+    <!-- SAVE INDICATOR -->
 
-            <div class="achievementTitle">
-                🏆 ACHIEVEMENTS
-            </div>
+    <div id="saveIndicator">
+        OPGESLAGEN
+    </div>
 
-            <div class="achievementSubtitle">
-                Ontdek alles wat je kunt bereiken
-            </div>
 
-            <div id="achievementList"></div>
+    <!-- MESSAGE -->
 
+    <div id="message"></div>
+
+
+    <!-- CRAFTING -->
+
+    <div id="crafting">
+
+        <div class="craftHeader">
+            <h2>FABRICATOR</h2>
+            <button id="closeCrafting">×</button>
+        </div>
+
+        <p>
+            Maak uitrusting en machines.
+        </p>
+
+
+        <button class="craftButton" data-craft="axe">
+            <b>SCAVENGER TOOL</b>
+            <small>8 hout + 4 steen</small>
+        </button>
+
+
+        <button class="craftButton" data-craft="pickaxe">
+            <b>MINING TOOL</b>
+            <small>10 steen + 5 erts</small>
+        </button>
+
+
+        <button class="craftButton" data-craft="lantern">
+            <b>ENERGY LAMP</b>
+            <small>5 hout + 2 erts</small>
+        </button>
+
+
+        <button class="craftButton" data-craft="block">
+            <b>WALL PANEL</b>
+            <small>5 hout + 5 steen</small>
+        </button>
+
+
+        <div class="craftDivider"></div>
+
+
+        <button class="craftButton machineCraft" data-craft="furnace">
+            <b>THERMAL PROCESSOR</b>
+            <small>12 steen + 8 erts</small>
+        </button>
+
+
+        <button class="craftButton machineCraft" data-craft="workbench">
+            <b>FABRICATION STATION</b>
+            <small>10 hout + 10 steen</small>
+        </button>
+
+
+        <button class="craftButton machineCraft" data-craft="miner">
+            <b>AUTO MINER</b>
+            <small>15 steen + 12 erts + 2 kristal</small>
+        </button>
+
+
+        <button class="craftButton machineCraft" data-craft="generator">
+            <b>ENERGY GENERATOR</b>
+            <small>10 erts + 5 kristal</small>
+        </button>
+
+    </div>
+
+
+    <!-- BUILD MENU -->
+
+    <div id="buildMenu">
+
+        <div class="buildTitle">
+            CONSTRUCTION
+        </div>
+
+        <button class="buildButton" data-build="block">
+            ■ WALL
+            <span id="buildBlockCount">0</span>
+        </button>
+
+        <button class="buildButton" data-build="furnace">
+            ⚙ PROCESSOR
+            <span id="buildFurnaceCount">0</span>
+        </button>
+
+        <button class="buildButton" data-build="workbench">
+            ⬡ STATION
+            <span id="buildWorkbenchCount">0</span>
+        </button>
+
+        <button class="buildButton" data-build="miner">
+            ⛏ AUTO MINER
+            <span id="buildMinerCount">0</span>
+        </button>
+
+        <button class="buildButton" data-build="generator">
+            ⚡ GENERATOR
+            <span id="buildGeneratorCount">0</span>
+        </button>
+
+        <div class="buildHint">
+            Klik een object en daarna op de grond.
+            <br>
+            Rechtermuisknop = verwijderen
         </div>
 
     </div>
 
 
-    <!-- =========================
-         GAME
-    ========================== -->
+    <!-- GAME OVER -->
 
-    <div id="game">
+    <div id="gameOver">
 
-        <canvas id="gameCanvas"></canvas>
+        <div class="gameOverBox">
 
-
-        <!-- HUD -->
-
-        <div id="hud">
-
-            <div id="healthBox">
-
-                <div class="hudTitle">
-                    GEZONDHEID
-                </div>
-
-                <div class="healthBar">
-                    <div id="health"></div>
-                </div>
-
-                <div id="healthText">
-                    100 / 100
-                </div>
-
+            <div class="gameOverTitle">
+                SIGNAL LOST
             </div>
-
-
-            <div id="inventory">
-
-                <div class="item">
-                    🪵
-                    <span id="wood">0</span>
-                </div>
-
-                <div class="item">
-                    🪨
-                    <span id="stone">0</span>
-                </div>
-
-                <div class="item">
-                    ⛏️
-                    <span id="ore">0</span>
-                </div>
-
-                <div class="item">
-                    💎
-                    <span id="crystal">0</span>
-                </div>
-
-                <div class="item">
-                    🧱
-                    <span id="block">0</span>
-                </div>
-
-                <div class="item">
-                    ⚙️
-                    <span id="machine">0</span>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- INFO -->
-
-        <div id="info">
-            WASD = bewegen<br>
-            Klik = verzamelen<br>
-            E = bouwmenu<br>
-            B = bouwen
-        </div>
-
-
-        <!-- MESSAGE -->
-
-        <div id="message"></div>
-
-
-        <!-- CRAFTING -->
-
-        <div id="crafting">
-
-            <h2>BOUW & CRAFTING</h2>
 
             <p>
-                Maak spullen en machines.
+                Je bent uitgeschakeld.
             </p>
 
-
-            <h3>GEREEDSCHAP</h3>
-
-            <button class="craftButton" data-craft="axe">
-                🪓 BIJL
-                <small>8 hout + 4 steen</small>
+            <button id="continueButton">
+                ↻ DOORGAAN
             </button>
 
-            <button class="craftButton" data-craft="pickaxe">
-                ⛏️ PIKHOUWEEL
-                <small>10 steen + 5 erts</small>
+            <button id="saveAfterDeath">
+                💾 SAVE
             </button>
-
-            <button class="craftButton" data-craft="lantern">
-                🏮 LANTAARN
-                <small>5 hout + 2 erts</small>
-            </button>
-
-
-            <h3>BOUWEN</h3>
-
-            <button class="craftButton" data-craft="block">
-                🧱 BOUWBLOK
-                <small>5 hout + 5 steen</small>
-            </button>
-
-
-            <h3>MACHINES</h3>
-
-            <button class="craftButton" data-craft="furnace">
-                🔥 OVEN
-                <small>12 steen + 4 erts</small>
-            </button>
-
-            <button class="craftButton" data-craft="workbench">
-                🛠️ WERKBANK
-                <small>10 hout + 6 steen</small>
-            </button>
-
-            <button class="craftButton" data-craft="miner">
-                ⛏️ MIJN MACHINE
-                <small>15 steen + 10 erts + 2 kristal</small>
-            </button>
-
-            <button class="craftButton" data-craft="generator">
-                ⚡ GENERATOR
-                <small>10 erts + 5 kristal</small>
-            </button>
-
-        </div>
-
-
-        <!-- GAME OVER -->
-
-        <div id="gameOver">
-
-            <h1>GAME OVER</h1>
 
             <button id="restartButton">
-                OPNIEUW
+                ⟳ NIEUWE RUN
+            </button>
+
+            <button id="menuButton">
+                MENU
             </button>
 
         </div>
 
     </div>
 
+</div>
 
-    <script src="app.js"></script>
+
+<script src="app.js"></script>
 
 </body>
 </html>
